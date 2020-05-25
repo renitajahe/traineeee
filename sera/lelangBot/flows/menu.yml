@@ -1,0 +1,103 @@
+volatile: true
+intents:
+    init:
+        initial: true
+        type: text
+        classifier:
+            nlu: intent
+            match: greet
+    user:
+        initial: true
+        type: text
+        classifier:
+            nlu: intent
+            match: menu
+            
+states:
+    init:
+        initial: true
+        transitions:
+            displayMenus: 
+                condition: intent == "init" || intent == "user"
+            init:
+                fallback: true
+    displayMenus:
+        action: 
+            -   name: sayHi
+            -   name: displayMenus
+
+        end: true
+actions:
+    sayHi:
+        type: text
+        options:
+            text: "Hai, nama saya Hibrid, asisten virtualmu. Jika ada pertanyaan tentang penawaran dan layanan IBID, Hibrid pasti bisa bantu."
+    displayMenus:
+        type: 'template'
+        options:
+            type: 'carousel'
+            items:
+                - 
+                    title: 'Katalog'
+                    text: ' Klik tombol dibawah ini jika Anda ingin melihat katalog.'
+                    thumbnailImageUrl: 'https://cdn2.vectorstock.com/i/1000x1000/13/01/book-icon-eps-vector-15221301.jpg'                  
+                    actions:
+                        - type: postback
+                          label: 'Katalog'
+                          payload:
+                              menu: katalog
+                - 
+                    title: 'Alamat Lelang'
+                    text: ' Klik tombol dibawah ini jika Anda ingin tahu alamat lelang.'
+                    thumbnailImageUrl: 'https://image.shutterstock.com/image-vector/location-pin-vector-icon-260nw-1361152820.jpg'                    
+                    actions:
+                        - type: postback
+                          label: 'Alamat Lelang'
+                          payload:
+                              menu: alamat
+                - 
+                    title: 'Pengambilan Unit'
+                    text: ' Klik tombol dibawah ini jika Anda ingin mengambil Unit yang anda menangkan.'
+                    thumbnailImageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSpDQCz-5nCwaW3NVJl7UOnsVu5EEWVO5NhhqC467B_Y_eAwU-o'                    
+                    actions:
+                        - type: postback
+                          label: 'Pengambilan Unit'
+                          payload:
+                              menu: ambilUnit
+                - 
+                    title: 'Keluhan Dan Klaim'
+                    text: ' Klik tombol dibawah ini jika Anda ingin menyampaikan keluhan dan klaim Anda'
+                    thumbnailImageUrl: 'https://www.panindai-ichilife.co.id/05f4731ef8900f57a27546003632f08220190404%20icon%20web%20PDL-04.png'
+                    actions:
+                        - type: postback
+                          label: 'Keluhan dan Klaim'
+                          payload:
+                              menu: keluhan
+                -
+                    title: 'Ambil BPKB'
+                    text: ' Klik tombol dibawah ini jika Anda ingin mengambil BPKB kendaraan Anda'
+                    thumbnailImageUrl: 'http://polrestabessurabaya.com/images/service/c94f038f1ddef8d9191d77b3935cbfe4.png'
+                    actions:
+                        - type: postback
+                          label: 'Pengambilan BPKB'
+                          payload:
+                              menu: ambilBpkb
+                -
+                    title: 'Pengambilan Dana Deposit'
+                    text: ' Klik tombol dibawah ini jika Anda ingin mengambil dana deposit.'
+                    thumbnailImageUrl: 'https://munitionsgroup.com/wp-content/uploads/2018/08/Money-Icon.jpg'
+                    actions:
+                        - type: postback
+                          label: 'Pengambilan Dana Deposit'
+                          payload:
+                              menu: ambilDeposit                
+                -
+                    title: 'Beli NPL'
+                    text: ' Klik tombol dibawah ini jika Anda ingin membeli NPL'
+                    thumbnailImageUrl: 'https://png.pngtree.com/element_our/png/20181108/loan-line-icon-png_233984.jpg'
+                    actions:
+                        - type: postback
+                          label: 'Beli NPL'
+                          payload:
+                              menu: beliNpl
+                

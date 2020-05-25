@@ -1,0 +1,38 @@
+volatile: true
+intents:
+    init:
+        initial: true
+        type: text 
+        classifier:
+            nlu: intent
+            match: keluhanDanKlaim
+    initButton:
+        initial: true
+        type: data
+        condition: payload.menu == "keluhan"
+    goToKeluhan:
+        initial: true
+        type: data
+        condition: payload.menu == "sambungAgent"
+states:
+    init:
+        initial: true
+        transitions:
+            keluhan:
+                condition: intent == "init" || intent == "initButton" || intent == "goToKeluhan"
+            init:
+                fallback: true
+    keluhan:    
+        action: 
+            - name: keluhanDanKlaim
+            - name: sayThanks
+        end: true
+actions:
+    keluhanDanKlaim:
+        type: text
+        options:
+            text: "Kamu akan segera dihubungkan dengan Agent Customer Service kami"
+    sayThanks:
+        type: text
+        options:
+            text: "Ok, kalau ada yang ingin ditanyakan, sapa Hibrid aja ya "

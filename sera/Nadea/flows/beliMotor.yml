@@ -1,0 +1,196 @@
+volatile: true
+intents:
+    order:
+        initial: true
+        type: text
+        classifier:
+            nlu: intent
+            match: beliMotor
+        attributes:
+            pizzaType:
+                # nlu: entities
+                nlu: nawaDealer #INI REFER KE NL YANG DIPAGGIL DI NLUS DI BOT.YML
+                path: motortype[0].resolved.dictKey 
+            pizzaSize:
+                nlu: nawaDealer
+                path: motorcolor[0].resolved.dictKey
+    initButton:
+        initial: true
+        type: data
+        condition: payload.menu == "beliMotor"
+    askInfo:
+        type: text
+        classifier:
+            nlu: intent
+            match: askOptions
+    askTypeInfo:
+        type: text
+        classifier:
+            nlu: intent
+            match: typeOptions
+    # giveType:
+    #     priority: 2
+    #     type: text
+    #     classifier:
+    #         nlu: intent
+    #         match: motorType
+    #     attributes: 
+    #         motorType:
+    #             nlu: entities
+    #             path: motorType[0].resolved.dictKey
+    #         motorColor:
+    #             nlu: entities
+    #             path: motorColor[0].resolved.dictKey
+    #     condition: context.$state == "askType"
+    # giveColor:
+    #     priority: 2
+    #     type: text 
+    #     classifier:
+    #         nlu: motorColor
+    #     attributes:
+    #         motorType:
+    #             nlu: motorColor
+    #     condition: context.$state == "askColor"
+    # pilihLagi:
+    #     type: data
+    #     condition: payload.menu == "pilihLagi"
+    fallback:
+        fallback: true
+
+states:
+    nadaOrder:
+        initial: true
+        action:
+            - name: recordOrder
+              condition: "intent == 'addDetails' && (attributes.motorType || attributes.motorColor)" # INTENT ADD DETAILNYA MANA?
+            - name: askType
+              condition: "!context.motorType"
+            - name: askColor
+              condition: "context.motorType && !context.motorColor"
+
+        transit:
+                # context.: "attributes.motorType || context.motorType || null" 
+                context.type: "attributes.motorType || context.motorType || null" #INI TADI CONTEXTNYA KOSONG
+                # context.: "attributes.motorColor || context.motorColor || null"
+                context.color: "attributes.motorColor || context.motorColor || null" #INI TADI CONTEXTNYA KOSONG
+
+        transitions:
+            typeInfo:
+                condition: 
+                    - intent == 'askTypeInfo'
+                    - intent == 'askInfo' && !context.type
+            crustInfo:
+                condition: 
+                    - intent == 'askCrustInfo'
+                    - intent == 'askInfo' && !context.crust
+    # init:
+    #     initial: true
+    #     transitions:
+    #         askType:
+    #             condition: intent == "init" || intent == "initButton"
+    #         init:
+    #             fallback: true
+    # askType:
+    #     action: askType
+    #     end: true
+    #     transitions:
+    #         askColor:
+    #             condition: intent == "giveType"
+    #         askType:
+    #             fallback: true
+    # askColor:
+    #     action: askColor
+    #     transitions:
+    #         cekStok:
+    #             condition: intent == "giveColor"
+    #         askColor:
+    #             fallback: true
+    # cekStok:
+    #     action: checking
+        
+
+actions: 
+    recordOrder:
+        type: method
+        method: writeDetails
+        options:
+            text: "Oke, Nada catat ya"
+    askType:
+        type: text
+        options:
+            text: "Sobat Nada mau motor tipe apa?"
+    askColor:
+        type: text
+        options:
+            text: "Mau warna apa?"
+    checking:
+        type: text
+        options:
+            text: "Sebentar yaa nada cek dulu"
+    stokHabis:
+        type: text
+        options:
+            text: "Maaf, untuk saat ini Motor tersebut tidak tersedia"
+    sayThanks:
+        type: text
+        options:
+            text: "Terima kasih sudah menggunakan layanan kami. Kalau butuh bantuan panggil Nada aja ya :)"
+    pilihLagi:
+        type: 'template'
+        options:
+            type: 'button'
+            items:
+                title: Mau pilih motor yang lain?
+                text: 'Mau pilih motor yang lain?'
+                actions:
+                    -
+                        type: postback
+                        label: Ya
+                        text: Ya
+                        payload:
+                            menu: pilihLagi
+                    -
+                        type: postback
+                        label: Tidak
+                        text: Tidak 
+                        payload:
+                            menu: sayThanks
+    confirmOrder:
+        type: text
+        options:
+            text: "Nada konfirmasi data pembelian motor $(data.name) yaa, apakah benar data $(data.name) sebagai berikut?\n
+                    Nama: 
+                    No.Telp: 
+                    Alamat: 
+                    tipe motor: 
+                    warna motor: "
+    giveTypeInfo:
+        type: text
+        options:
+            text: "Pilihan tipe motor-nya:
+                1. Vario
+                2. Beat
+                3. Mio"
+    giveColorInfo:
+        type: text
+        options:
+            text: "Pilihan warna motor-nya:
+                1. Putih
+                2. Hitam
+                3. Merah
+                4. Biru
+                5. Hijau"
+
+methods:
+  writeDetails(message, context, data, options): "
+    let text = options.text || '';
+    let result = [];
+    for (let i in message.attributes) {
+      if (message.attributes[i])
+        result.push(message.attributes[i]);
+    }
+    return {
+      type: 'text',
+      content: text + ' ' + result.join(', ')
+    }
+  "

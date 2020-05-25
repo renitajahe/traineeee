@@ -1,0 +1,124 @@
+volatile: true
+intents:
+    init:
+        initial: true
+        type: text
+        classifier:
+            nlu: intent
+            match: faq
+    initButton:
+        initial: true
+        type: data
+        condition: payload.menu == "faq"
+    inputQuestion:
+        type: text
+        classifier:
+            nlu: questions
+        attributes:
+            inputQuestion:
+                nlu: questions
+    # reAsk:
+    #     type: data
+    #     condition: payload.menu == "nanyaLagi"
+    # selesai:
+    #     type: data
+    #     condition: payload.menu == "udahan"
+    fallback:
+        fallback: true
+
+states:
+    init:
+        initial: true
+        transitions:
+            greetingAsk:
+                condition: intent == "init" || intent == "initButton"
+            init:
+                fallback: true
+    greetingAsk:
+        action: greetAsk
+        transitions:
+            questions:
+                condition: intent == "inputQuestion" 
+                mapping:
+                    context.questions: attributes.inputQuestion
+            greetingAsk:
+                fallback: true 
+    questions: 
+        action:
+            -   name: answerlogo
+                condition: attributes.inputQuestion == "logo"
+            # -   name: answerBisaTfBedaBank
+            #     condition: attributes.inputQuestion == "tfBedaBank"
+            # -   name: answerTfBayarGa
+            #     condition: attributes.inputQuestion == "biayaTf"
+            # -   name: answerBikinRekening
+            #     condition: attributes.inputQuestion == "bikinRekening"
+            # -   name: answerBikinAtm
+            #     condition: attributes.inputQuestion == "bikinAtm"
+            -   name: optionLanjut   
+        end: true    
+    #     transitions:
+    #         akhiran:
+    #             condition: intent == "selesai" 
+    #         questions:
+    #             fallback: true 
+    # akhiran:
+    #     action: akhiran
+    #     end: true
+
+actions:
+    greetAsk:
+        type: text
+        options:
+            text: "Apa yang ingin sobat Nanda tanyakan nih?"
+    answerLogo:
+        type: text
+        options:
+            text: "(logo)"
+        # type: 'template'
+        # options:
+        #   type: 'image'
+        #   items:
+        #     originalContentUrl: 'media.licdn.com/dms/image/C510BAQHKeqeF69Ey4Q/company-logo_200_200/0?e=2159024400&v=beta&t=961Fu9iV-Q4ISMjVPiVW3Iah_p24E4Jdz1g-NGNovA0'
+        #     previewImageUrl: 'media.licdn.com/dms/image/C510BAQHKeqeF69Ey4Q/company-logo_200_200/0?e=2159024400&v=beta&t=961Fu9iV-Q4ISMjVPiVW3Iah_p24E4Jdz1g-NGNovA0'
+    answerBisaTfBedaBank:
+        type: text
+        options:
+            text: "Nawa-Bank dapat melayani transfer ke bank BCA, BRI, dan BNI"
+    answerTfBayarGa:
+        type: text
+        options:
+            text: "Untuk ke sesama Nawa-Bank biaya administrasi, kalau ke bank lain biaya administrasi-nya sebesar 10000 rupiah"
+    answerBikinRekening:
+        type: text
+        options:
+            text: "Silakan Sobat Nanda pergi ke Nawa-Bank terdekat"
+    answerBikinAtm:
+        type: text
+        options:
+            text: "Silakan Sobat Nanda pergi ke Nawa-Bank terdekat"
+    akhiran:
+        type: text
+        options:
+            text: "Baiklah, silakan sapa Nanda kembali jika sobat Nanda butuh bantuan:)"
+    optionLanjut:
+        type: 'template'
+        options:
+              type: 'button'
+              items:
+                  title: options
+                  text: 'Ada yang mau ditanyain lagi?'
+                  actions:
+                      -
+                          type: postback
+                          label: Ya
+                          text: Ya
+                          payload:
+                              menu: nanyaLagi
+                      -
+                          type: postback
+                          label: Tidak
+                          text: Tidak 
+                          payload:
+                              menu: udahan
+    

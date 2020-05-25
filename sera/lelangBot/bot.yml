@@ -1,0 +1,139 @@
+schema: kata.ai/schema/kataml/1.0
+name: Lelang
+desc: Lelang bot
+id: lelangBot-renitajahe
+lang: id
+version: 0.0.2
+flows:
+    fallback: $include(./flows/fallback.yml)
+    menu: $include(./flows/menu.yml)
+    katalog: $include(./flows/katalog.yml)
+    alamat: $include(./flows/alamat.yml)
+    keluhan: $include(./flows/keluhan.yml)
+    beliNpl: $include(./flows/beliNpl.yml)
+    ambilUnit: $include(./flows/ambilUnit.yml)
+    ambilDeposit: $include(./flows/ambilDeposit.yml)
+    ambilBpkb: $include(./flows/ambilBpkb.yml)
+nlus:
+    intent:
+        type: keyword
+        options:
+            keywords:
+                greet:
+                    - hi
+                    - hai
+                    - halo
+                    - hello
+                    - excuse me
+                    - misi
+                    - hibrid
+                    - woi
+                    - hei
+                menu:
+                    - menu
+                    - awal
+                    - kembali
+                katalog:
+                    - katalog
+                alamatt:
+                    - alamat
+                beliNpl:
+                    - beli
+                    - npl
+                unit:
+                    - pengambilan unit
+                    - ambil unit
+                    - beli nplil unit
+                    - pengambilan
+                    - unit
+                keluhanDanKlaim:
+                    - ini kok
+                    - woiss
+                    - keluhan
+                    - woi
+                    - eh
+                    - klaim
+                    - keluh
+                    - keluhan dan klaim
+                bpkb:
+                    - ambil bpkb
+                    - bpkb
+                    - pengambilan bpkb
+                pengambilanDana:
+                    - deposit
+                    - ambil dana deposit
+                    - pengambilan dana deposit
+                    - dana deposit
+                    - dana
+                cancel:
+                    - batal
+                    - cancel
+                    - gajadi
+                    - ga jadi
+                closing:
+                    - ok
+                    - oke
+                    - sip
+                    - baik
+                    - baiklah
+                    - okay
+                    - alright
+    alamat:
+        type: keyword
+        options:
+            keywords:
+                Jakarta:
+                    - dki
+                    - dki jakarta
+                    - jkt
+                    - jakarta
+                    - kota jakarta
+                Bandung:
+                    - bandung
+                    - kota bandung
+                    - bdg
+                Surabaya:
+                    - surabaya
+                    - kota surabaya
+                Semarang:
+                    - semarang
+                    - kota semarang
+                Palembang:
+                    - palembang
+                    - kota palembang
+                Medan:
+                    - medan
+                    - kota medan
+                Pekanbaru:
+                    - pekanbaru
+                    - kota pekanbaru
+                Balikpapan:
+                    - balikpapan
+                    - kota balikpapan
+                Banjarmasin:
+                    - banjarmasin
+                    - kota banjarmasin
+                Makassar:
+                    - makassar
+                    - kota makassar
+    nomorPolisi:
+        type: keyword
+        options:
+            keywords:
+                nopolBenar:
+                    - b1234ac
+                    - b 1234 ac
+                nopolSalah:
+                    - c1234ab
+                    - c 1234 ab
+    nomorBpkb:
+        type: keyword
+        options:
+            keywords:
+                nopolBenarBpkb:
+                    - b1234ac
+                    - b 1234 ac
+                nopolSalahBpkb:
+                    - c1234ab
+                    - c 1234 ab
+tag: null

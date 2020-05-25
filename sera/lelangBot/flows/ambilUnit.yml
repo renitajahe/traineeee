@@ -1,0 +1,152 @@
+volatile: true
+intents:
+    init:
+        initial: true
+        type: text
+        classifier:
+            nlu: intent
+            match: unit
+    initButton:
+        initial: true
+        type: data
+        condition: payload.menu == "ambilUnit"
+    nopolBenar:
+        priority: 1
+        type: text
+        classifier:
+            nlu: nomorPolisi
+            match: nopolBenar
+    nopolSalah:
+        priority: 2
+        type: text
+        classifier:
+            nlu: nomorPolisi
+            match: nopolSalah
+    nopolNotFound:
+        priority: 2
+        type: text
+        classifier:
+            nlu: nomorPolisi
+            match: nopolNotFound
+    inputUlangUnit:
+        initial: true
+        type: data  
+        condition: payload.menu == "cobaUlangUnit" && context.$lastState == "notFound"
+    sambungAgentUnit:
+        initial: true
+        type: data
+        condition: payload.menu == "sambungAgentUnit" && context.$lastState == "notFound"
+    cancel:
+        priority: 1
+        type: text
+        classifier:
+            nlu: intent
+            match: cancel
+    fallback:
+        fallback: true
+
+states:
+    init:
+        initial: true
+        transitions:
+            sambungAgentUnit:
+                condition: intent == "sambungAgentUnit"
+            cancel:
+                condition: intent == "cancel"
+            showUnit:
+                condition: intent == "init" || intent == "initButton" || intent == "inputUlangUnit" 
+            init: 
+                fallback: true
+    showUnit:
+        action: ambilUnit
+        transitions:
+            nopolBenar:
+                condition: intent == "nopolBenar"
+                mapping:
+                    context:
+                        nopol: content
+            nopolSalah:
+                condition: intent == "nopolSalah" 
+                mapping:
+                    context:
+                        nopol: content
+            notFound:
+                fallback: true
+    notFound:
+        action: displayOptions
+        end: true
+        # transitions:
+        #     showUnit:
+        #         condition: intent == "inputUlang"
+        #     sambungAgent:
+        #         condition: intent == "sambungAgent"
+        #     notFound:
+        #         fallback: true
+    sambungAgentUnit:
+        action: 
+            - name: sambungAgentUnit
+            - name: sayThanks
+        end: true
+    nopolBenar:
+        action: 
+            - name: benar
+            - name: sayThanks
+        end: true 
+    nopolSalah:
+        action:
+            - name: salah
+            - name: sayThanks
+        end: true
+    cancel:
+        end: true
+        action:
+            - name: cancel
+            - name: sayThanks
+        float:
+            condition: intent == "cancel"
+     
+actions:
+    ambilUnit:
+        type: text
+        options:
+            text: "Silakan masukkan Nomor Polisi unit yang kamu menangkan" 
+    benar:
+        type: text
+        options:
+            text: "Unit kamu Nopol $(context.nopol) sudah dapat diambil di lokasi yang telah ditentukan"
+    salah:
+        type: text
+        options:
+            text: "Unit kamu Nomor Polisi $(context.nopol) belum dapat diambil, silakan cek kembali beberapa saat kedepan"
+    sambungAgentUnit:
+        type: text
+        options:
+            text: "Kamu akan segera dihubungi dengan Agent Customer Service kami"
+    displayOptions:
+        type: 'template'
+        options:
+            type: 'button'
+            items:
+                title: options
+                text: "Nomor polisi yang kamu masukkan tidak ditemukan, masukkan nomor yang benar atau silahkan bicara dengan agent kami"
+                actions:
+                    -
+                        type: 'postback'
+                        label: Coba Ulang
+                        text: Coba Ulang
+                        payload:
+                            menu: cobaUlangUnit
+                    -
+                        type: 'postback'
+                        label: Sambung Agent
+                        text: Sambung Agent
+                        payload:
+                            menu: sambungAgentUnit
+    cancel:
+        type: text
+        options:
+            text: "Ok, transaksi dibatalkan. Terima kasih telah memilih layanan kami"
+    sayThanks:
+        type: text
+        options:
+            text: "Ok, kalau ada yang ingin ditanyakan, sapa Hibrid aja ya"

@@ -1,0 +1,343 @@
+volatile: true
+intents:
+    createToDoByButton:
+        initial: true
+        type: data  
+        condition: payload.menu == "createToDo"
+    createTodoByTyping:
+        initial: true
+        priority: 2
+        type: text
+        classifier:
+            nlu: intent
+            expression: "main == 'createTodo'"
+    showToDoByButton:
+        initial: true
+        type: data  
+        condition: payload.menu == "showToDo"
+    showTodoByTyping:
+        initial: true
+        priority: 2
+        type: text
+        classifier:
+            nlu: intent
+            expression: "main == 'showTodo'"
+    # showDetailByButton:
+    #     initial: true
+    #     type: data  
+    #  
+    #     initial: true
+    #     priority: 2
+    #     type: text
+    #     classifier:
+    #         nlu: intent
+    #         expression: "main == 'showDetail'"
+    inputDate:
+        priority: 1
+        type: text
+        classifier:
+            nlu: contosoEntity
+            expression: datetime
+        attributes:
+            date:
+                path: datetime
+                nlu: contosoEntity
+    yes:
+        priority: 1
+        type: text 
+        classifier:
+            nlu: intent
+            expression: yesno == "yes"
+    no:
+        priority: 1
+        type: text 
+        classifier:
+            nlu: intent
+            expression: yesno == "no"
+    closing:
+        # initial: true
+        type: data  
+        condition: payload.menu == "closing"
+    backToMenu:
+        type: data
+        condition: payload.menu = "askForMoreYes"
+    getApi:
+        priority: 2
+        type: command
+        condition: content == "getApi"
+    fallback:
+        fallback: true
+
+states:
+    init:
+        initial: true
+        transitions:
+            askNamaTugas:
+                condition: 'intent == "createToDoByButton" || intent == "createTodoByTyping"' 
+            callApiShowList:
+                condition: 'intent == "showToDoByButton" || intent == "showTodoByTyping"'
+            init:
+                fallback: true
+    askNamaTugas:
+        action: 
+            - name: askNamaTugas
+        transitions:
+            askTanggal:
+                fallback: true
+                mapping:
+                    context.taskName: content
+            askNamaTugas:
+                fallback: true
+    askTanggal:
+        action: 
+            - name: askTanggal
+        transitions:
+            askFavorite:
+                condition: intent == "inputDate"
+                mapping:
+                    context.date: content
+            askTanggal:
+                fallback: true 
+    askFavorite:
+        # enter: getFavorite
+        action: 
+            - name: askFavorite
+        transitions:
+            askDescription:
+                fallback: true
+                mapping:
+                    context.favorite: content
+            askFavorite:
+                fallback: true
+    askDescription:
+        enter: getFavorite
+        action: 
+            - name: askDescription
+        transitions:
+            askDesc:
+                condition: intent == "yes"
+            callApiCreateTask: 
+                  condition: intent == "no"
+            askDescription:
+                fallback: true 
+    askDesc:
+        action:
+            - name: askDesc
+        transitions:
+            callApiCreateTask: 
+                fallback: true
+                mapping:
+                    context.desc: content
+            askDesc:
+                fallback: true
+    callApiCreateTask:
+        action:
+            -   name: callApiCreateTask
+            -   name: command 
+                options: 
+                    command: getApi
+                    payload: 
+                        result: $(result)
+        transitions:
+            askForMore:
+                condition: intent == "getApi" && payload.result 
+                mapping:
+                    context.result: payload.result
+            failed:
+                condition: intent == "getApi" && !payload.result
+                # fallback: true
+    askForMore:
+        action: 
+            - name: taskNoted
+            - name: askForMore
+        transitions:
+            closing:
+                condition: intent == "closing" || intent == "no"
+            backToMenu:
+                condition: intent == "backToMenu" || intent =="yes"
+            askForMore:
+                fallback: true
+    backToMenu:
+        action: goToMenu
+        end: true
+    closing:    
+        action: closing
+        end: true
+    failed:    
+        action: failed
+        end: true
+    callApiShowList:
+        action:
+            -   name: callApiShowList
+            -   name: command 
+                options: 
+                    command: getApi
+                    payload: 
+                        result: $(result)
+        transitions:
+            showToDoList:
+                condition: intent == "getApi" && payload.result 
+                mapping:
+                    context.result: payload.result.result
+            noTodo:
+                condition: intent == "getApi" && !payload.result
+                fallback: true
+    showToDoList:
+        enter: getList
+        action: 
+            - name: showList
+            - name: askForMore
+        transitions:
+            closing:
+                condition: intent == "closing" || intent == "no"
+            backToMenu:
+                condition: intent == "backToMenu" || intent =="yes"
+            showToDoList:
+                fallback: true
+    noTodo:
+        action: 
+            - name: noTodo
+            - name: askForMore
+        transitions:
+            closing:
+                condition: intent == "closing" || intent == "no"
+            backToMenu:
+                condition: intent == "backToMenu" || intent =="yes"
+            noTodo:
+                fallback: true
+
+actions:
+    askNamaTugas:
+        type: text
+        options:
+            text: Tugasnya mau kamu beri nama apa?
+    askTanggal:
+        type: text
+        options:
+            text: Buat tanggal berapa nih?
+    askFavorite:
+        type: text
+        options:
+            text: Tugas $(context.taskName) ini mau dijadiin tugas favorit kamu ga?
+    askDescription:
+        type: text
+        options:
+            text: Oke, terus ada deskripsi khusus ga buat tugas kamu ini?
+    askDesc:
+        type: text
+        options:
+            text: Apa deskripsi khusus yang mau Kamu beri untuk tugas ini?
+    taskNoted:
+        type: text
+        options:
+            text: Sip! tugas $(context.taskName) berhasil Clara buat!
+    showList:
+        type: text
+        options:
+            text: "Clara lihat, tugas kamu ada dibawah : \n
+                    $(context.list)"
+    failed:
+        type: text
+        options:
+            text: "Oops, something went wrong"
+    noTodo:
+        type: text
+        options: 
+            text: "Kamu nggak punya tugas apapun yang harus dikerjakan"
+    askForMore:
+        type: 'template'
+        options:
+            type: 'button'
+            items:
+                title: Clara
+                text: 'Ada lagi yang Clara bisa bantu?'
+                actions:
+                    -
+                        type: postback
+                        label: Ya
+                        text: Ya
+                        payload:
+                            menu: askForMoreYes
+                    -
+                        type: postback
+                        label: Nggak
+                        text: Nggak
+                        payload:
+                            menu: closing
+    closing:
+        type: text
+        options:
+            text: Makasih udah chat Clara!     
+    goToMenu:
+        type: command
+        options:
+            command: goToMenu
+    callApiCreateTask:
+        type: api
+        options:    
+            method: POST
+            headers:
+                Authorization: "Bearer $(data.token)"
+            body:
+                name: $(context.taskName)
+                description: $(context.desc)
+                date: $(context.date)
+                favorite: $(context.favorite)
+                userId: $(data.UserId)
+            uri: 'https://dandung-contoso.herokuapp.com/createtask'
+    callApiShowList:
+        type: api
+        options:    
+            method: GET
+            headers:
+                Authorization: "Bearer $(data.token)"
+            body:
+                userId: $(data.UserId)
+            uri: 'https://dandung-contoso.herokuapp.com/showall'
+    
+methods:
+    getList(ctx): "
+        var data = ctx.context.result;
+        var todoList;
+        var desc = '';
+        var number = 1;
+        for(let a in data){
+            todoList = data[a].name;
+            desc = desc + number + '. ' + todoList + '\\n';
+
+            number += 1;
+        }
+
+        ctx.context.list = desc;
+
+        return ctx;
+    "
+    
+    getFavorite(ctx): "
+        var favorite = ctx.context.favorite;        
+        if ((favorite == 'iya') || (favorite == 'ya') || (favorite == 'yes') || (favorite == 'true')) {
+            var fav = 'True';
+        } else {
+            var fav = 'false';
+        }
+        ctx.context.favorite = fav;
+
+        return ctx;
+    "
+
+    showList(ctx): "
+        var data = ctx.context.result;
+        var todoList;
+        var desc = '';
+        var number = 1;
+        for(let a in data){
+            todoList = data[a].name;
+            desc = desc + number + '. ' + todoList + '\\n';
+
+            number += 1;
+        }
+
+        ctx.context.list = desc;
+
+        return ctx;
+    "

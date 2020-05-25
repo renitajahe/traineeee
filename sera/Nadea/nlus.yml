@@ -1,0 +1,80 @@
+name: Nawa-Dealer
+lang: id
+entities:
+    beliMotor:
+        type: trait
+        profile: default
+        labels:
+            - order
+            - addDetails
+    tipe:
+        type: dict
+        profile: default
+        dictionary:
+            vario:
+                - vario
+                - pario
+                - paryo
+                - varyo
+                - vro
+                - vrio
+            beat:
+                - beat
+                - bit
+                - baet
+                - bite
+            mio:
+                - mio
+                - myo
+                - miyo
+    warna:
+        type: dict
+        profile: default
+        dictionary:
+            putih:
+                - putih
+                - white
+                - pth
+                - puti
+                - bodas
+                - wht
+                - puth
+                - ptih
+            hitam:
+                - hitam
+                - item
+                - black
+                - hideng
+                - hideung
+                - htm
+                - hitm
+                - htam
+                - itam
+                - hitem
+            merah:
+                - merah
+                - mera
+                - mrh
+                - mrah
+                - merh
+                - red
+                - berem
+                - beureum
+                - bereum
+            biru:
+                - biru
+                - blu
+                - blue
+                - br
+                - bru
+                - bir
+            hijau:
+                - hijau
+                - ijo
+                - ijau
+                - hijaw
+                - green
+                - grin
+                - hejo
+                - hjw
+                - hju

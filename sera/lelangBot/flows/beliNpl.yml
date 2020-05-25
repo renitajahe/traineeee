@@ -1,0 +1,35 @@
+volatile: true
+intents:
+    init:
+        initial: true
+        type: text
+        classifier:
+            nlu: intent
+            match: beliNpl
+    initButton:
+        initial: true
+        type: data
+        condition: payload.menu == "beliNpl"
+states:
+    init:
+        initial: true
+        transitions:
+            beliNpl:
+              condition: intent == "init" || intent == "initButton"
+            init:
+              fallback: true
+    beliNpl:
+        action:
+            - name: beliNPL
+            - name: sayThanks
+        end: true
+actions:
+    beliNPL:
+        type: text
+        options:
+            text: "Silahkan daftar atau log in terlebih dahulu, lalu pilih menu Beli NPL.
+Pilih objek lelang, type NPL, Kota dan Jadwal lelang, serta jumlah NPL yang kamu inginkan. Lalu Lanjutkan pembayaran dengan memilih Metode Pembayaran, dan silahkan lakukan pembayaran."
+    sayThanks:
+        type: text
+        options:
+            text: "Ok, kalau ada yang ingin ditanyakan, sapa Hibrid aja ya:)"

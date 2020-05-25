@@ -1,0 +1,36 @@
+schema: kata.ai/schema/kataml/1.0
+name: AHM
+desc: AHM
+id: ahm-renitajahe
+lang: id
+version: 0.0.1
+flows:
+    faq: $include(./flows/faq.yml)
+    fallback: $include(./flows/fallback.yml)
+nlus:
+    intent:
+        type: keyword
+        options:
+            keywords:
+                faq:
+                    - lainnya
+                    - dan lain-lain
+                    - lain
+                    - faq
+                    - hi
+    questions:
+        type: nl
+        options:
+            nluId: 'renitajahe:nl_faq_ahm'
+            token: 4ca4166e-9dc7-492c-a79a-4d99cb43046d
+            output: value
+            threshold: 0.5
+            flatten: true
+    dicts:
+        type: nl
+        options:
+            nluId: 'renitajahe:nl_faq_ahm'
+            token: 4ca4166e-9dc7-492c-a79a-4d99cb43046d
+            output: raw
+            threshold: 0.1
+tag: null

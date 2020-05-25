@@ -1,0 +1,102 @@
+schema: kata.ai/schema/kataml/1.0
+name: Nawa Bank
+desc: Nawa Bank
+id: nawaBank-renitajahe
+lang: id
+version: 0.0.1
+flows:
+    fallback: $include(./flows/fallback.yml)
+    menu: $include(./flows/menu.yml)
+    faq: $include(./flows/faq.yml)
+nlus:
+    intent:
+        type: keyword
+        options:
+            keywords:
+                greet:
+                    - hi
+                    - hai
+                    - helo
+                    - hello
+                    - halo
+                    - hei
+                    - woi
+                    - nanda
+                    - menu
+                benar:
+                    - iya
+                    - ya
+                    - yup
+                    - oke
+                    - benar
+                    - bener
+                    - ok
+                    - oke
+                    - betul
+                    - right
+                    - iye
+                    - 'y'
+                    - iy
+                salah:
+                    - salah
+                    - bukan
+                    - wrong
+                    - tidak
+                faq:
+                    - faq
+                    - frequently asked question
+                    - pertanyaan
+                    - nanya
+                    - tanya
+                reAsk:
+                    - lagi
+                    - nanya lagi
+                selesai:
+                    - udah
+                    - selesai
+                cancel:
+                    - batal
+                    - cancel
+                lokasi:
+                    - lokasi
+                    - location
+    nawaBankEntity:
+        type: nl
+        options:
+            nluId: 'renitajahe:nawaBank'
+            token: 1e85ccc3-2bf9-4110-bf54-910a5d3468e5
+            output: phrase
+            entity: kata
+            threshold: 0.5
+    questions:
+        type: keyword
+        options:
+            keywords:
+                logo:
+                    - mau liat logo Nawa-Bank
+                    - pengen liat logo Nawa-Bank
+                    - logonya kaya gimana
+                    - logo nya gimana
+                    - logo nawabank
+                    - logo nawabank gimana ya
+                    - logo
+                tfBedaBank:
+                    - bisa transfer beda bank?
+                    - kalo transfer beda bank bisa
+                    - bisa transfer beda bank
+                    - transfer beda bank bisa ga ya
+                biayaTf:
+                    - berapa biaya transfernya?
+                    - biaya transfer
+                    - biaya transfernya berapa ya
+                bikinRekening:
+                    - bikin rekening
+                    - cara bikin rekening
+                    - mau bikin rekening
+                    - bikin rekening gimana ya
+                bikinAtm:
+                    - bikin atm
+                    - cara bikin atm
+                    - mau bikin atm
+                    - cara bikin atm gimana ya
+tag: null

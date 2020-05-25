@@ -1,0 +1,214 @@
+volatile: true 
+intents:
+    init:
+        initial: true
+        type: text
+        classifier:
+            nlu: intent
+            match: faq
+    initButton:
+        initial: true
+        type: data
+        condition: payload.menu == "faq"
+    inputQuestion:
+        priority: 2
+        type: text
+        classifier:
+            nlu: questions
+        attributes:
+            inputQuestion:
+                nlu: questions
+    reAskText:
+        initial: true
+        type: text
+        classifier:
+            nlu: intent
+            match: reAsk
+    reAsk:
+        type: data
+        condition: payload.menu == "nanyaLagi"
+    selesaiText:
+        initial: true
+        type: text
+        classifier:
+            nlu: intent
+            match: selesai
+    selesai:
+        type: data
+        condition: payload.menu == "udahan"
+    idle:
+        type: command
+        command: content == "userIdle"
+    cancel:
+        type: text
+        classifier:
+            nlu: intent
+            match: cancel
+    fallback:
+        fallback: true
+
+states:
+    init:
+        initial: true
+        transitions:
+            greetingAsk:
+                condition: intent == "init" || intent == "initButton"
+            init:
+                fallback: true
+    greetingAsk:
+        enter: parseTime
+        action: 
+            - name: greetAsk
+            - name: userIdle
+        transitions:
+            questions:
+                condition: intent == "inputQuestion" 
+                mapping:
+                    context.questions: attributes.inputQuestion
+            other:
+                fallback: true 
+    questions: 
+        action:
+            -   name: answerLogo
+                condition: attributes.inputQuestion == "logo"
+            -   name: answerBisaTfBedaBank
+                condition: attributes.inputQuestion == "tfBedaBank"
+            -   name: answerTfBayarGa
+                condition: attributes.inputQuestion == "biayaTf"
+            -   name: answerBikinRekening
+                condition: attributes.inputQuestion == "bikinRekening"
+            -   name: answerBikinAtm
+                condition: attributes.inputQuestion == "bikinAtm"
+            -   name: optionLanjut   
+        transitions: 
+            akhiran:
+                condition: intent == "selesai" 
+            greetingAsk:
+                condition: payload.menu == "nanyaLagi" 
+            questions:
+                fallback: true
+    other:
+        action: other
+        end: true
+    akhiran:
+        action: akhiran
+        end: true
+    idle:
+        action:
+            -   name: removeUserIdle
+            -   name: timeoutMessage
+            
+        float:
+            priority: 10
+            condition: "intent == 'idle'"
+        end: true
+    batal:
+        action: cancel
+        float:
+            priority: 10
+            condition: "intent == 'cancel'"
+        end: true
+
+actions:
+    greetAsk:
+        type: text
+        options:
+            text: "Apa yang ingin sobat Nanda tanyakan nih?"
+    cancel:
+        type: text
+        options:
+            text: "batal ya"
+    tes:
+        type: text
+        options:
+            text: "Ada lagi yang bisa Nanda bantu?"
+    timeoutMessage:
+        type: text
+        options:
+            text: "Silahkan sapa Nanda lagi ya jika sobat Nanda butuh bantuan :)"
+    answerLogo:
+        type: 'template'
+        options:
+          type: 'image'
+          items: 
+            originalContentUrl: 'https://media.licdn.com/dms/image/C510BAQHKeqeF69Ey4Q/company-logo_200_200/0?e=2159024400&v=beta&t=961Fu9iV-Q4ISMjVPiVW3Iah_p24E4Jdz1g-NGNovA0'
+            previewImageUrl: 'https://media.licdn.com/dms/image/C510BAQHKeqeF69Ey4Q/company-logo_200_200/0?e=2159024400&v=beta&t=961Fu9iV-Q4ISMjVPiVW3Iah_p24E4Jdz1g-NGNovA0'
+    answerBisaTfBedaBank:
+        type: text
+        options:
+            text: "Nawa-Bank dapat melayani transfer ke bank BCA, BRI, dan BNI"
+    answerTfBayarGa:
+        type: text
+        options:
+            text: "Untuk ke sesama Nawa-Bank biaya administrasi-nya Rp5000, kalau ke bank lain biaya administrasi-nya sebesar 10000 rupiah"
+    answerBikinRekening:
+        type: text
+        options:
+            text: "Silakan Sobat Nanda pergi ke Nawa-Bank terdekat"
+    answerBikinAtm:
+        type: text
+        options:
+            text: "Silakan Sobat Nanda pergi ke Nawa-Bank terdekat"
+    akhiran:
+        type: text
+        options:
+            text: "Baiklah, silakan sapa Nanda kembali jika sobat Nanda butuh bantuan:)"
+    other:
+        type: text
+        options:
+            text: "Kayanya Nanda harus belajar lagi biar ngerti apa maksud kamu"
+    optionLanjut:
+        type: 'template'
+        options:
+              type: 'button'
+              items:
+                  title: Nawa Bank
+                  text: 'Ada yang mau ditanyain lagi?'
+                  actions:
+                      -
+                          type: postback
+                          label: Ya
+                          text: Ya
+                          payload:
+                              menu: nanyaLagi
+                      -
+                          type: postback
+                          label: Tidak
+                          text: Tidak 
+                          payload:
+                              menu: udahan
+    removeUserIdle:
+        type: schedule
+        options:
+            id: userIdle
+            command: remove
+
+    userIdle:
+        type: schedule
+        options:
+            id: userIdle
+            command: add
+            message:
+                type: command
+                content: userIdle
+            start: $(data.parsedTime)
+            end: $(data.parsedTimeEnd)
+            freqType: minutes
+            freqInterval: 2
+    
+methods:
+    parseTime(ctx): "
+        let date = new Date(ctx.context.$now + 120000);
+        let dateISO = date.toISOString();
+        let parsedDate = dateISO.split('T');
+        let parsedTime = parsedDate[1].split('.');
+        ctx.data.parsedTime = parsedDate[0] + ' ' + parsedTime[0];
+​
+        let dateEnd = new Date(ctx.context.$now + 120000);
+        let dateISOEnd = dateEnd.toISOString();
+        let parsedDateEnd = dateISOEnd.split('T');
+        let parsedTimeEnd = parsedDateEnd[1].split('.');
+        ctx.data.parsedTimeEnd = parsedDateEnd[0] + ' ' + parsedTimeEnd[0];
+​
+        return ctx;
+    "

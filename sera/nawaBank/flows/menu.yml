@@ -1,0 +1,233 @@
+volatile: true 
+intents:
+    followPostback:
+        initial: true 
+        type: data
+        condition: "payload.type == 'follow'"
+    sayHi:
+        initial: true
+        type: text
+        classifier:
+            nlu: intent
+            match: greet
+    giveName:
+        priority: 2
+        type: text
+        classifier:
+            nlu: nawaBankEntity
+            expression: person
+        attributes:
+            name:
+                path: person
+                nlu: nawaBankEntity
+        condition: context.$state == "askName"
+    giveEmail:
+        priority: 2
+        type: text
+        classifier:
+            nlu: nawaBankEntity
+            expression: email
+        attributes:
+            email:
+                path: email
+                nlu: nawaBankEntity
+        condition: context.$state == "askEmail"
+    givePhone:
+        priority: 2
+        type: text
+        classifier:
+            nlu: nawaBankEntity
+            expression: phone
+        attributes:
+            phone:
+                path: phone
+                nlu: nawaBankEntity
+        condition: context.$state == "askPhone"
+    giveAddress:
+        priority: 2
+        type: text
+        classifier:
+            nlu: nawaBankEntity
+            expression: location
+        attributes:
+            address:
+                path: location
+                nlu: nawaBankEntity
+        condition: context.$state == "askAddress"
+    benar:
+        priority: 2
+        type: text
+        classifier:
+            nlu: intent
+            match: benar
+        condition: context.$state == "confirmation"
+    salah:
+        priority: 2
+        type: text
+        classifier:
+            nlu: intent
+            match: salah
+        condition: context.$state == "confirmation"
+    fallback:
+        fallback: true
+    
+states:
+    init: 
+        initial: true
+        transitions:  
+            askName:
+                condition: ((intent == "sayHi" || intent == "followPostback") && !data.name) || intent == "salah"
+            askMenu:
+                condition: (intent == "sayHi" || intent == "followPostback") && data.name
+            init: 
+                fallback: true
+    askName:
+        action: 
+            -   name: askName
+                condition: '!context.fallback'
+            -   name: askNameBack
+                condition: context.fallback
+        transitions:
+            askEmail:
+                condition: intent == "giveName"  
+                mapping:
+                    data:
+                        name: attributes.name 
+                    mapping: 
+                        context.fallback: "false"
+            askName:
+                fallback: true
+    askEmail:
+        action: 
+            -   name: askEmail
+                condition: '!context.fallback'
+            -   name: askEmailBack
+                condition: context.fallback
+        transitions:
+            askPhone:
+                condition: intent == "giveEmail"  
+                mapping: 
+                    data:
+                        email: attributes.email 
+                        context.fallback: "false"
+            askEmail:
+                fallback: true
+    askPhone:
+        action: 
+            -   name: askPhone
+                condition: '!context.fallback'
+            -   name: askPhoneBack
+                condition: context.fallback
+        transitions:
+            askAddress:
+                condition: intent == "givePhone"  
+                mapping:
+                    data:
+                        phone: attributes.phone 
+                        context.fallback: "false"
+            askPhone:
+                fallback: true
+    askAddress:
+        action: 
+            -   name: askAddress
+                condition: '!context.fallback'
+            -   name: askAddressBack
+                condition: context.fallback
+        transitions:
+            confirmation:
+                condition: intent == "giveAddress"  
+                mapping:
+                    data:
+                        address: attributes.address 
+                        context.fallback: "false"
+            askAddress:
+                fallback: true
+    confirmation:
+        action: confirmation
+        transitions:
+            askMenu:
+                condition: intent == "benar"
+            askName:
+                condition: intent == "salah"
+                mapping:
+                    context.fallback: "true"
+            confirmation:
+                fallback: true
+    askMenu:
+        action: 
+            - name: askMenu
+            - name: menus
+        end: true
+    
+actions:
+    askName:
+        type: text
+        options:
+            text: "Hi, perkenalkan aku Nanda, asisten virtual dari Nawa-Bank yang akan membantu sobat Nanda menjawab pertanyaan seputar Nawa-Bank. Btw, nama kamu siapa?"
+    askEmail:
+        type: text
+        options:
+            text: "Oke $(data.name)! Nanda akan sering panggil kamu sobat Nanda yaa.. Alamat email $(data.name) apa?"
+    askPhone:
+        type: text
+        options:
+            text: "Kemudian untuk mempermudah semua proses, Nanda ingin tahu nomor telepon sobat Nanda nih, Berapa nomor telepon kamu?"
+    askAddress:
+        type: text
+        options:
+            text: "Terakhir, kota tinggal sobat Nanda dimana?"
+    confirmation:
+        type: text
+        options:
+            text: "Hi Nanda konfirmasi data $(data.name) yaa, apakah benar data $(data.name) sebagai berikut?\n
+                    Nama: $(data.name)\n
+                    No.Telp: $(data.phone)\n
+                    Email: $(data.email)\n
+                    Alamat: $(data.address)"
+    askMenu:
+        type: text
+        options:
+            text: "Ada yang bisa Nanda bantu? Silahkan piih menu dibawah ini ya :)"
+    menus:
+        type: 'template'
+        options:
+            type: 'carousel'
+            items:
+                - 
+                    title: 'Lokasi'
+                    text: 'Cari ATM terdekat'
+                    thumbnailImageUrl: 'https://cdn.idntimes.com/content-images/community/2017/09/atms-e71406ddd05b8629f25047234612315d_600x400.jpg'                  
+                    actions:
+                        - type: postback
+                          label: 'Lokasi'
+                          payload:
+                              menu: lokasi
+                - 
+                    title: 'FAQ'
+                    text: 'Tanya-tanya yuk!'
+                    thumbnailImageUrl: 'https://previews.123rf.com/images/coramax/coramax1212/coramax121200182/16933237-3d-people-man-person-with-word-faq-frequently-asked-questions.jpg'                    
+                    actions:
+                        - type: postback
+                          label: 'FAQ'
+                          payload:
+                              menu: faq
+    askNameBack:
+        type: text
+        options:
+            text: "Oke, jadi nama kamu yang benar siapa?"
+    askEmailBack:
+        type: text
+        options:
+            text: "Kalo email kamu yang benar apa?"
+    askPhoneBack:
+        type: text
+        options:
+            text: "Silahkan masukkan no telepon sobat Nanda yang benar"
+    askAddressBack:
+        type: text
+        options:
+            text: "Kota tinggal sobat Nanda dimana?"
+    gapaham:
+        type: text
+        options:
+            text: "Kayanya Nanda harus banyak belajar lagi biar ngerti apa maksud kamu"

@@ -1,0 +1,14 @@
+to do:
+- greeting + askName
+- askEmail
+- askPhone
+- askAddress
+- confirmation
+- menu -> carousel (location & faq)
+
+> location:
+- askLocation + button
+- giveLocation
+
+> faq
+- questionssssssss

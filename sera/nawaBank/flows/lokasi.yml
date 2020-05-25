@@ -1,0 +1,90 @@
+volatile: true
+intents: 
+    init:
+        initial: true
+        type: text
+        classifier:
+            nlu: intent
+            match: lokasi
+    initButton:
+        initial: true
+        type: data
+        condition: payload.menu == "lokasi"
+    lokasi:
+        type:
+
+    # reAsk:
+    #     type: data
+    #     condition: payload.menu == "nanyaLagi"
+    # selesai:
+    #     type: data
+    #     condition: payload.menu == "udahan"
+states:
+    init:
+        initial: true
+        transitions:
+            confirmLocation:
+                condition: intent == "init" || intent == "initButton"
+            init:
+                fallback: true
+    confirmLocation:
+        action: 
+            - name: confirmLocation
+            - name: suggestionButton
+            - name: locationButton
+        transitions:
+            displayLocation:
+                condition: intent == "lokasi"
+            confirmLocation:
+                fallback: true
+    displayLocation:
+        action: 
+            - name: result
+            - name: 
+    
+actions:
+    confirmLocation:
+        type: text
+        options:
+            text: "Ok, Aku bantu carikan lokasi cabang Nawa-Bank ya, coba share lokasi Kamu dengan klik tombol dibawah ini"
+    suggestionButton:
+        type: text
+        options:
+            text: "Silakan klik tombol dibawah ini ya"
+    locationButton:
+        type: "template"
+        options:
+            type: "button"
+            items:
+                quickreply:
+                    - type: "location"
+                    - type: "text"
+                    thumbnailImageUrl?: 
+                    label: Share Lokasi
+                    payload: JsonObject
+    result:
+        type: text
+        options:
+            text: "Berikut pencarian tempat terdekat dengan lokasi anda"
+    optionLanjut:
+        type: 'template'
+        options:
+              type: 'button'
+              items:
+                  title: options
+                  text: 'Ada yang mau ditanyain lagi?'
+                  actions:
+                      -
+                          type: postback
+                          label: Ya
+                          text: Ya
+                          payload:
+                              menu: nanyaLagi
+                      -
+                          type: postback
+                          label: Tidak
+                          text: Tidak 
+                          payload:
+                              menu: udahan
+
+    

@@ -1,0 +1,307 @@
+volatile: true
+intents:
+    init:
+        initial: true
+        type: text
+        classifier:
+            nlu: intent
+            match: lokasi 
+    initButton:
+        initial: true
+        type: data
+        condition: payload.menu == "lokasi"
+    giveLoc:
+        priority: 5
+        type: text
+        classifier:
+            nlu: alamat
+        attributes:
+            giveLoc:
+                nlu: alamat
+    retry:
+        initial: true
+        priority: 5
+        type: data
+        condition: payload.menu == "retry" && context.$lastState == "notFound"
+    retryText:
+        initial: true
+        priority: 5
+        type: text
+        classifier:
+            nlu: intent
+            match: pilihLagi
+    selesai:
+        initial: true
+        priority: 5
+        type: data
+        condition: payload.menu == "selesai" && context.$lastState == "notFound"
+    selesaiText:
+        initial: true
+        priority: 5
+        type: text
+        classifier:
+            nlu: intent
+            match: selesai
+    cancel:
+        type: text
+        priority: 10
+        classifier:
+            nlu: nl-noyes
+            expression: intent == "cancel"
+        attributes: 
+            intent: 
+                nlu: nl-noyes
+                path: intent
+                options:
+                    output: dict
+    resetData:
+        priority: 10
+        condition:
+            - "content == '#katafuadresetulangdariawal'"
+            - "content == '#katafuad'"
+            - "content == 'reset'"
+            - "content == 'Reset'"
+    # lokasi:
+    #     type: data
+    #     condition: payload.type == "location"
+    fallback:
+        fallback: true
+     
+
+states:
+    init:
+        initial: true
+        transitions:
+            # confirmLokasi:
+            askLocation:
+                condition: intent == "init" || intent == "initButton"
+            init: 
+                fallback: true
+    askLocation:
+        action:
+            - name: confirmLokasi
+            - name: askLoc
+        transitions:
+            # location:
+            #     condition: 
+            location:
+                condition: intent == "giveLoc"
+                mapping:
+                    context.location: attributes.giveLoc
+            notFound:
+                fallback: true
+    location:
+        action:
+            -   name: jakarta
+                condition: attributes.giveLoc == "Jakarta"
+            -   name: bandung
+                condition: attributes.giveLoc == "Bandung"
+            -   name: sayThanks
+        end: true
+    notFound:
+        action: 
+            - name: alamatLain
+            - name: suggest
+        transitions:
+            askLocation:
+                condition: intent == "retry" || intent == "retryText"
+            selesai:
+                condition: intent == "selesai" || intent == "selesaiText"
+            notFound:
+                fallback: true
+    cancel:
+        action:
+            - name: cancel
+            - name: akhiran
+        float:
+            priority: 10
+            condition: 'intent == "cancel"'
+        end: true
+    resetData:
+        action: resetData
+        float: 
+            priority: 10
+            condition: 'intent == "resetData"'
+        end: true
+    selesai:
+        action: sayThanks
+        end: true
+    # confirmLokasi:
+    #     action:
+    #         - name: confirmLokasi
+    #         # - name: suggestion
+    #         - name: locationButton
+    #     transitions:
+    #         end:
+    #             condition: intent == "lokasi"
+    #         confirmLokasi:
+    #             fallback: true
+    # end:
+    #     action: end
+    #     end: true
+    
+actions:
+    tes:
+        type: text
+        options:
+            text: "tess"
+    confirmLokasi:
+        type: text
+        options:
+            text: "Ok, Nada bantu cari lokasi Nawa-Dealer terdekat yaa"
+    # getApiLocation:
+    #     type: api
+    #     options:
+    #         method: GET
+    #         uri: 'http://7d6a7dc9.ngrok.io/apaya'
+    suggestion:
+        type: text
+        options:
+            text: "Silakan klik tombol dibawah ini"
+    # locationButton:
+    #     type: template
+    #     options:
+    #     type: location
+    #     items:
+    #         title: "Wadaw"
+    #         address: "Ruko Mulya"
+    #         latitude: "-6.403482"
+    #         longitude: "106.773991"
+    #     type: "template"
+    #     options:
+    #         type: text
+    #         text: "Silakan klik tombol dibawah ini"
+    #         items:
+    #             quickreply:
+    #                 -   type: "location"
+    # nadaMulya:
+        # type: template
+        # options:
+        # type: location
+        # items:
+        #     title: "Wadaw"
+        #     address: "Ruko Mulya"
+        #     latitude: "-6.403482"
+        #     longitude: "106.773991"
+            # locationImageUrl: string optional
+    # nadaMulti:
+    #     type: template
+    #     options:
+    #     type: location
+    #     items:
+    #         title: "Nadaw"
+    #         address: "Ruko Multiguna"
+    #         latitude: "-6.403489"
+    #         longitude: "106.773998"
+    # end:
+        # type: text
+        # options:
+        #     text: "Maaf fitur ini belum tersedia"
+    askLoc:
+        type: text
+        options:
+            text: "Silahkan masukkan lokasi kota anda"
+    cancel:
+        type: text
+        options:
+            text: "Ok, Nada batalin ya"
+    resetData:
+        type: command
+        options:
+            command: reset
+    akhiran:
+        type: text
+        options:
+            text: "Baiklah, silakan sapa Nada kembali jika sobat Nada butuh bantuan:)"
+    jakarta:
+        type: 'template'
+        options:
+            type: 'carousel'
+            items:
+                - 
+                    title: 'Jakarta'
+                    text: 'Oke, berikut lokasi dealer sekitar kota jakarta'
+                    thumbnailImageUrl: 'https://t1.pixers.pics/img-c676e9e9/posterler-klasik-motosiklet-vektor-siluet-vektor-motosiklet-simgesi.jpg?H4sIAAAAAAAAA42PW07EMAxFt9NK7dhNk9bpAuZ3llDl1aHQR5QEGLF6EkD8ISHL8kO-x7rwekS1ODDuSC7Avlq7OVjWLU9xCi6uH67CRghZT3m7VYhYT-ebCyacvmoFNi2nZugwJ6und5WFuwov1VNKPk4Asb_49ZFpuZgIZo_AsBsBCYQkqdjCJHLqZt_GpA6rgs3Uh8CLP-4Nlvg_lqBDENp2etBkkWuaGSuw9pfwhe1l8UQF_eNxRGzG4i2Fda-y2TNfp-rZ32v44-d3D1kF1xsIgoFDz4FYWc3Xm6CB95zYPFjFrLD9IhZthGJSOaYl48voSAppLvnLJyBOXHyJAQAA'                  
+                    actions:
+                        - type: postback
+                          label: 'Jl. Jalan, Jakarta Pusat'
+                          payload:
+                              menu: jakarta
+                - 
+                    title: 'Jakarta'
+                    text: 'Oke, berikut lokasi dealer sekitar kota jakarta'
+                    thumbnailImageUrl: 'https://t1.pixers.pics/img-c676e9e9/posterler-klasik-motosiklet-vektor-siluet-vektor-motosiklet-simgesi.jpg?H4sIAAAAAAAAA42PW07EMAxFt9NK7dhNk9bpAuZ3llDl1aHQR5QEGLF6EkD8ISHL8kO-x7rwekS1ODDuSC7Avlq7OVjWLU9xCi6uH67CRghZT3m7VYhYT-ebCyacvmoFNi2nZugwJ6und5WFuwov1VNKPk4Asb_49ZFpuZgIZo_AsBsBCYQkqdjCJHLqZt_GpA6rgs3Uh8CLP-4Nlvg_lqBDENp2etBkkWuaGSuw9pfwhe1l8UQF_eNxRGzG4i2Fda-y2TNfp-rZ32v44-d3D1kF1xsIgoFDz4FYWc3Xm6CB95zYPFjFrLD9IhZthGJSOaYl48voSAppLvnLJyBOXHyJAQAA'                  
+                    actions:
+                        - type: postback
+                          label: 'Jl. Jalan, Jakarta barat'
+                          payload:
+                              menu: jakarta
+                - 
+                    title: 'Jakarta'
+                    text: 'Oke, berikut lokasi dealer sekitar kota jakarta'
+                    thumbnailImageUrl: 'https://t1.pixers.pics/img-c676e9e9/posterler-klasik-motosiklet-vektor-siluet-vektor-motosiklet-simgesi.jpg?H4sIAAAAAAAAA42PW07EMAxFt9NK7dhNk9bpAuZ3llDl1aHQR5QEGLF6EkD8ISHL8kO-x7rwekS1ODDuSC7Avlq7OVjWLU9xCi6uH67CRghZT3m7VYhYT-ebCyacvmoFNi2nZugwJ6und5WFuwov1VNKPk4Asb_49ZFpuZgIZo_AsBsBCYQkqdjCJHLqZt_GpA6rgs3Uh8CLP-4Nlvg_lqBDENp2etBkkWuaGSuw9pfwhe1l8UQF_eNxRGzG4i2Fda-y2TNfp-rZ32v44-d3D1kF1xsIgoFDz4FYWc3Xm6CB95zYPFjFrLD9IhZthGJSOaYl48voSAppLvnLJyBOXHyJAQAA'                  
+                    actions:
+                        - type: postback
+                          label: 'Jl. Jalan, Jakarta Selatan'
+                          payload:
+                              menu: jakarta
+    bandung:
+        type: 'template'
+        options:
+            type: 'carousel'
+            items:
+                - 
+                    title: 'Bandung'
+                    text: 'Oke, berikut lokasi dealer sekitar kota Bandung'
+                    thumbnailImageUrl: 'https://t1.pixers.pics/img-c676e9e9/posterler-klasik-motosiklet-vektor-siluet-vektor-motosiklet-simgesi.jpg?H4sIAAAAAAAAA42PW07EMAxFt9NK7dhNk9bpAuZ3llDl1aHQR5QEGLF6EkD8ISHL8kO-x7rwekS1ODDuSC7Avlq7OVjWLU9xCi6uH67CRghZT3m7VYhYT-ebCyacvmoFNi2nZugwJ6und5WFuwov1VNKPk4Asb_49ZFpuZgIZo_AsBsBCYQkqdjCJHLqZt_GpA6rgs3Uh8CLP-4Nlvg_lqBDENp2etBkkWuaGSuw9pfwhe1l8UQF_eNxRGzG4i2Fda-y2TNfp-rZ32v44-d3D1kF1xsIgoFDz4FYWc3Xm6CB95zYPFjFrLD9IhZthGJSOaYl48voSAppLvnLJyBOXHyJAQAA'                  
+                    actions:
+                        - type: postback
+                          label: 'Jl. Jalan, Bandung Timur'
+                          payload:
+                              menu: Bandung
+                - 
+                    title: 'Bandung'
+                    text: 'Oke, berikut lokasi dealer sekitar kota Bandung'
+                    thumbnailImageUrl: 'https://t1.pixers.pics/img-c676e9e9/posterler-klasik-motosiklet-vektor-siluet-vektor-motosiklet-simgesi.jpg?H4sIAAAAAAAAA42PW07EMAxFt9NK7dhNk9bpAuZ3llDl1aHQR5QEGLF6EkD8ISHL8kO-x7rwekS1ODDuSC7Avlq7OVjWLU9xCi6uH67CRghZT3m7VYhYT-ebCyacvmoFNi2nZugwJ6und5WFuwov1VNKPk4Asb_49ZFpuZgIZo_AsBsBCYQkqdjCJHLqZt_GpA6rgs3Uh8CLP-4Nlvg_lqBDENp2etBkkWuaGSuw9pfwhe1l8UQF_eNxRGzG4i2Fda-y2TNfp-rZ32v44-d3D1kF1xsIgoFDz4FYWc3Xm6CB95zYPFjFrLD9IhZthGJSOaYl48voSAppLvnLJyBOXHyJAQAA'                  
+                    actions:
+                        - type: postback
+                          label: 'Jl. Jalan, Bandung barat'
+                          payload:
+                              menu: Bandung
+                - 
+                    title: 'Bandung'
+                    text: 'Oke, berikut lokasi dealer sekitar kota Bandung'
+                    thumbnailImageUrl: 'https://t1.pixers.pics/img-c676e9e9/posterler-klasik-motosiklet-vektor-siluet-vektor-motosiklet-simgesi.jpg?H4sIAAAAAAAAA42PW07EMAxFt9NK7dhNk9bpAuZ3llDl1aHQR5QEGLF6EkD8ISHL8kO-x7rwekS1ODDuSC7Avlq7OVjWLU9xCi6uH67CRghZT3m7VYhYT-ebCyacvmoFNi2nZugwJ6und5WFuwov1VNKPk4Asb_49ZFpuZgIZo_AsBsBCYQkqdjCJHLqZt_GpA6rgs3Uh8CLP-4Nlvg_lqBDENp2etBkkWuaGSuw9pfwhe1l8UQF_eNxRGzG4i2Fda-y2TNfp-rZ32v44-d3D1kF1xsIgoFDz4FYWc3Xm6CB95zYPFjFrLD9IhZthGJSOaYl48voSAppLvnLJyBOXHyJAQAA'                  
+                    actions:
+                        - type: postback
+                          label: 'Jl. Jalan, Bandung Selatan'
+                          payload:
+                              menu: Bandung
+    alamatLain:
+        type: text
+        options:
+            text: "Maaf, untuk saat ini lokasi tersebut belum tersedia"
+    suggest:
+        type: template
+        options:
+              type: button
+              items:
+                  title: options
+                  text: "Silahkan masukkan nama kota terdekat dengan lokasi anda atau klik tombol selesai untuk mengakhiri sesi"
+                  actions:
+                      -
+                          type: postback
+                          label: Masukkan nama kota 
+                          text: Masukkan nama kota 
+                          payload:
+                              menu: retry
+                      -
+                          type: postback
+                          label: Selesai
+                          text: Selesai 
+                          payload:
+                              menu: selesai
+    sayThanks:
+        type: text
+        options:
+            text: "Terima kasih sudah menggunakan layanan kami. Kalau butuh bantuan panggil Nada aja ya :)"

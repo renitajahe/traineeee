@@ -1,0 +1,26 @@
+schema: kata.ai/schema/kata-ml/1.0
+name: Clara
+desc: Clara Bot
+version: 0.0.525
+flows:
+    greeting: $include(./flows/greeting.yml)
+    createTodo: $include(./flows/createTodo.yml)
+    showDetail: $include(./flows/showDetail.yml)
+nlus:
+    intent:
+        type: nl
+        options:
+            nluId: 'renitajahe:clara-nl-main'
+            token: 10202265-bafa-4a15-ad5d-0099456c5179
+            output: value
+            threshold: 0.3
+            flatten: true
+    contosoEntity:
+        type: nl
+        options:
+            nluId: 'renitajahe:clara-nl-main'
+            token: 10202265-bafa-4a15-ad5d-0099456c5179
+            output: phrase
+            entity: kata
+            threshold: 0.5
+tag: null

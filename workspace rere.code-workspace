@@ -1,0 +1,38 @@
+{
+	"folders": [
+		{
+			"name": "Nawa-Dealer",
+			"path": "sera\\Nawa-Dealer"
+		},
+		{
+			"name": "nawaBank",
+			"path": "sera\\nawaBank"
+		},
+		{
+			"name": "lelangBot",
+			"path": "sera\\lelangBot"
+		},
+		{
+			"path": "jaki-kata\\jaki-kata-yml"
+		},
+		{
+			"path": "jaki\\jaki-kata-yml"
+		},
+		{
+			"path": "jak\\jaki-kata-yml"
+		},
+		{
+			"path": "contoso"
+		},
+		{
+			"path": "sera\\Ahm"
+		},
+		{
+			"path": "D:\\learning space\\css grid"
+		},
+		{
+			"path": "D:\\learning space\\flexbox"
+		}
+	],
+	"settings": {}
+}

@@ -1,0 +1,196 @@
+cancel:
+                    - batal
+                    - cancel
+                    - gajadi
+                    - ga jadi
+benar:
+                    - iya
+                    - ya
+                    - yup
+                    - oke
+                    - benar
+                    - bener
+                    - ok
+                    - oke
+                    - betul
+                    - right
+                    - iye
+                    - 'y'
+                    - iy
+salah:
+                    - salah
+                    - bukan
+                    - wrong
+                    - tidak
+
+    yesno:
+        type: nl
+        options:
+            nluId: 'renitajahe:nl-noyes'
+            token: d5dbd294-1ef0-43d3-be4c-3b1cd3673090
+            output: phrase
+            entity: yesno
+            threshold: 0.5
+    cancel:
+        type: nl
+        options:
+            nluId: 'renitajahe:nl-noyes'
+            token: d5dbd294-1ef0-43d3-be4c-3b1cd3673090
+            output: phrase
+            entity: intent
+            threshold: 0.5
+    negativeComment:
+        type: nl
+        options:
+            nluId: 'renitajahe:nl-noyes'
+            token: d5dbd294-1ef0-43d3-be4c-3b1cd3673090
+            output: phrase
+            entity: negativeComment
+            threshold: 0.5
+
+
+
+volatile: true
+intents:
+    init:
+        initial: true
+        type: text
+        classifier:
+            nlu: intent
+            match: faq
+    initButton:
+        initial: true
+        type: data 
+        condition: payload.menu == "faq"
+    inputQuestion:
+        priority: 2
+        type: text
+        classifier:
+            nlu: questions
+        attributes:
+            inputQuestion:
+                nlu: questions
+    reAskText:
+        initial: true
+        priority: 2
+        type: text
+        classifier:
+            nlu: intent
+            match: reAsk
+    reAsk:
+        type: data
+        condition: payload.menu == "reAsk"
+    selesaiText:
+        priority: 2
+        type: text
+        classifier:
+            nlu: intent
+            match: selesai
+    selesai:
+        type: data
+        condition: payload.menu == "selesai"
+    cancel:
+        priority: 2
+        type: text
+        classifier:
+            nlu: intent
+            match: cancel
+    fallback:
+        fallback: true
+            
+states:
+    init:
+        initial: true
+        transitions:
+            greetingAsk:
+                condition: intent == "init" || intent == "initButton" || intent == "reAsk" || intent == "reAskText"
+            cancel:
+                condition: intent == "cancel"
+            init:
+                fallback: true
+    greetingAsk:
+        action: greetingAsk
+        transitions:
+            questions:
+                condition: intent == "inputQuestion"
+                mapping:
+                    context.questions: attributes.inputQuestion
+            other:
+                fallback: true 
+    questions: 
+        action:
+            -   name: answerLogo
+                condition: attributes.inputQuestion == "logo"
+            -   name: answerCicil
+                condition: attributes.inputQuestion == "bisaCicil"
+            -   name: optionLanjut  
+        transitions: 
+            akhiran:
+                condition: intent == "selesai" || intent == "selesaiText"
+            greetingAsk:
+                condition: payload.menu == "again" || intent == "reAskText"
+            questions:
+                fallback: true
+    cancel:
+        end: true
+        action:
+            - name: cancel
+            - name: akhiran
+        float:
+            priority: 10
+            condition: intent == "cancel"
+    other:
+        action: other
+        end: true
+    akhiran:
+        action: akhiran
+        end: true
+actions:
+    greetingAsk:
+        type: text
+        options:
+            text: "Apa yang ingin sobat Nada tanyakan nih?"
+    cancel:
+        type: text
+        options:
+            text: "Ok, Nada batalin ya"
+    answerLogo:
+        type: 'template'
+        options:
+          type: 'image'
+          items: 
+            originalContentUrl: 'https://media.licdn.com/dms/image/C510BAQHKeqeF69Ey4Q/company-logo_200_200/0?e=2159024400&v=beta&t=961Fu9iV-Q4ISMjVPiVW3Iah_p24E4Jdz1g-NGNovA0'
+            previewImageUrl: 'https://media.licdn.com/dms/image/C510BAQHKeqeF69Ey4Q/company-logo_200_200/0?e=2159024400&v=beta&t=961Fu9iV-Q4ISMjVPiVW3Iah_p24E4Jdz1g-NGNovA0'
+    answerCicil:
+        type: text
+        options:
+            text: "Sistem pembayaran Nawa-Dealer bisa langsung lunas dan tersedia pula pilihan cicilan."
+    akhiran:
+        type: text
+        options:
+            text: "Baiklah, silakan sapa Nada kembali jika sobat Nada butuh bantuan:)"
+    other:
+        type: text
+        options:
+            text: "Nada gangerti apa maksud kamu :("
+    optionLanjut:
+        type: 'template'
+        options:
+              type: 'button'
+              items:
+                  title: Nawa Dealer
+                  text: 'Ada yang mau ditanyain lagi?'
+                  actions:
+                      -
+                          type: postback
+                          label: Tanya lagi
+                          text: Tanya lagi
+                          payload:
+                              menu: reAsk
+                      -
+                          type: postback
+                          label: Selesai
+                          text: Selesai
+                          payload:
+                              menu: selesai
+methods: {}

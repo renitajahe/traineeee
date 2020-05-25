@@ -1,0 +1,454 @@
+volatile: true
+intents:
+    init:
+        initial: true
+        type: text
+        classifier:
+            nlu: intent
+            match: beliMotor
+        attributes: 
+            motorType: 
+                nlu: nl_produk
+                path: motortype
+                options:
+                    output: dict
+            motorColor:
+                nlu: nl_produk
+                path: motorcolor
+                options:
+                    output: dict
+    initButton:
+        initial: true
+        type: data
+        condition: payload.menu == "beliMotor"
+    giveType:
+        type: text
+        priority: 3
+        classifier:
+            nlu: produk
+            expression: motortype
+        attributes: 
+            motorType: 
+                nlu: nl_produk
+                path: motortype
+                options:
+                    output: dict
+    giveColor:
+        type: text
+        priority: 3
+        classifier:
+            nlu: warna
+            expression: motorcolor
+        attributes: 
+            motorColor: 
+                nlu: nl_warna
+                path: motorcolor
+                options:
+                    output: dict
+    benar:
+        type: text
+        priority: 3
+        classifier:
+            nlu: noyes
+            expression: yesno == "yes"
+        attributes: 
+            yesno: 
+                nlu: nl-noyes
+                path: yesno
+        condition: context.$state == "confirmOrder" || context.$state == "fail"
+    salah:
+        type: text
+        priority: 3
+        classifier:
+            nlu: noyes
+            expression: yesno == "no"
+        attributes: 
+            yesno: 
+                nlu: nl-noyes
+                path: yesno
+        condition: context.$state == "confirmOrder"
+    cancel: 
+        type: text
+        priority: 3
+        classifier:
+            nlu: nl-noyes
+            expression: intent == "cancel"
+        attributes: 
+            intent: 
+                nlu: nl-noyes
+                path: intent
+                options:
+                    output: dict
+    resetData:
+        priority: 10
+        condition:
+            - "content == '#katafuadresetulangdariawal'"
+            - "content == '#katafuad'"
+            - "content == 'reset'"
+            - "content == 'Reset'"
+    pilihLagi:
+        initial: true
+        priority: 5
+        type: data
+        condition: payload.menu == "pilihLagi"
+    pilihLagiText:
+        initial: true
+        priority: 5
+        type: text
+        classifier:
+            nlu: intent
+            match: pilihLagi
+    sayThanks:
+        initial: true
+        priority: 5
+        type: data
+        condition: payload.menu == "sayThanks"
+    sayThanksTextDiFlowMotor:
+        initial: true
+        priority: 5
+        type: text
+        classifier:
+            nlu: intent
+            match: selesai
+    getApi:
+        priority: 2
+        type: command
+        condition: content == "getApi"
+    fallback:
+        fallback: true
+
+states:
+    init:
+        initial: true
+        transitions:
+            callApiAllProduct:
+            # askType:
+                condition: (intent == "init" || intent == "initButton") && !attributes.motorType
+                mapping:
+                    data.motorColor: attributes.motorColor
+            askColor:
+                condition: intent == "init" && (attributes.motorType && !attributes.motorColor)
+                mapping:
+                    data.motorType: attributes.motorType
+            confirmOrder:
+                condition: (intent == "init" || intent == "initButton") && (attributes.motorType && attributes.motorColor)
+                mapping:
+                    data.motorColor: attributes.motorColor
+                    data.motorType: attributes.motorType
+            init:
+                fallback: true
+    callApiAllProduct:
+        action: 
+            -   name: callApiAllProduct
+            -   name: command
+                options: 
+                    command: getApi
+                    payload: 
+                        result: $(result)
+        transitions:
+            askType:
+                condition: intent == "getApi" && payload.result
+                mapping:
+                    context.result: payload.result
+            typefailed:
+                condition: intent == "getApi" && !payload.result
+    typefailed:
+        action: typefailed
+        end: true
+    fail:
+        action: 
+            - name: other
+            # - name: ask
+            - name: displayOptions
+        transitions:
+            callApiAllProduct:
+                condition: intent == "benar"
+            sayThanks:
+                condition: intent == "sayThanks" || intent == "sayThanksTextDiFlowMotor" || intent == "salah"
+            fail:
+                fallback: true
+    askType:
+        enter: getType
+        action:
+            - name: askType
+              condition: '!data.motorType'
+            - name: typeOptions
+              condition: '!data.motorType'
+        transitions:
+            callApiColor:
+            # askColor:
+                condition: intent == "giveType" && (attributes.motorType && !attributes.motorColor) 
+                mapping:
+                    context:
+                        token: data.token
+                    data:
+                        motorType: attributes.motorType
+            other:
+                fallback: true
+    callApiColor:
+        action: 
+            -   name: callApiColor
+            -   name: command
+                options: 
+                    command: getApi
+                    payload: 
+                        result: $(result)
+        # end: true
+        transitions:
+            askColor:
+                condition: intent == "getApi" && payload.result
+                mapping:
+                    context.result: payload.result
+            fail:
+                condition: intent == "getApi" && !payload.result
+    askColor:
+        enter: getColor
+        action:
+            - name: askColor
+              condition: '!data.motorColor'
+            - name: colorOptions
+              condition: '!data.motorColor'
+            # - name: callApiColor
+            #   condition: '!data.motorColor'
+        transitions:
+            confirmOrder:
+                condition: intent == "giveColor" 
+                mapping:
+                    data:
+                        motorColor: attributes.motorColor
+            other:
+                fallback: true
+    confirmOrder:
+        # enter: confirm
+        action: confirmOrder
+        transitions:
+            callApiOrder:
+            # done:
+                condition: intent == "benar"
+                mapping:
+                    data.motorType: "null"
+                    data.motorColor: "null"
+            askType:
+                condition: intent == "salah"
+                mapping:
+                    data.motorType: "null"
+                    data.motorColor: "null"
+    callApiOrder:
+        action: 
+            -   name: callApiOrder
+            -   name: command
+                options: 
+                    command: getApi
+                    payload: 
+                        result: $(result)
+        transitions:
+            done:
+                condition: intent == "getApi" && payload.result
+                mapping:
+                    data.order: payload.result
+            fail:
+                condition: intent == "getApi" && !payload.result 
+    cancel:
+        action:
+            - name: cancel
+            - name: akhiran
+        float: 
+            priority: 10
+            condition: 'intent == "cancel"'
+        end: true
+    resetData:
+        action: resetData
+        float: 
+            priority: 10
+            condition: 'intent == "resetData"'
+        end: true
+    other:
+        action:
+            - name: other
+            # - name: ask
+            - name: displayOptions
+        transitions:
+            # askType:
+            tes:
+                condition: intent == "pilihLagi" || intent == "pilihLagiText"
+            sayThanks:
+                condition: intent == "sayThanks" || intent == "sayThanksTextDiFlowMotor"
+            other:
+                fallback: true
+    sayThanks:
+        action: sayThanks
+        end: true
+    tes:
+        action: tes
+        end: true
+    done:
+        action:
+            - name: done
+            # - name: sayThanks
+        end: true
+
+actions:
+    tes:
+        type: text
+        options:
+            text: 'tes 123'
+    askType: 
+        type: text
+        options:
+            text: "Sobat Nada mau motor tipe apa?"
+    typefailed:
+        type: text
+        options:
+            text: "Sebentar yaa, Nada lagi ngumpulin datanya. Panggil Nada beberapa saat lagi ya"
+    typeOptions:
+        type: text
+        options:
+            text: "$(context.type)"
+    colorOptions:
+        type: text
+        options:
+            # text: "biru"
+            text: "$(context.color)"
+    ask:
+        type: text
+        options:
+            text: "Mau pilih motor lain?"
+    callApiOrder:
+        type: api
+        options:    
+            method: POST
+            uri: 'http://1500c045.ngrok.io/order'
+            headers:
+                Content-Type: application/json
+                Authorization: "Bearer $(data.token)"
+            formData:
+                type: $(context.type)
+                color: $(context.color)
+                fbid: $(metadata.fbmessengerSenderId)
+    askColor: 
+        type: text
+        options:
+            text: "Mau warna apa?"
+    confirmOrder: 
+        type: text
+        options:
+            text: "Oke Nada proses ya pesanan kamu. Sebelumnya apakah datanya sudah benar?\n
+                    Tipe Motor: $(data.motorType)\n
+                    Warna Motor: $(data.motorColor)\n"
+    callApiAllProduct:
+        type: api
+        options:
+            method: GET
+            uri: 'http://1500c045.ngrok.io/allproduct'
+    
+    callApiColor:
+        type: api
+        options:    
+            method: GET
+            headers:
+                Authorization: "Bearer $(data.token)"
+            formData:
+                input_type: $(data.motorType)
+            uri: 'http://1500c045.ngrok.io/showcolor'
+    other:
+        type: text 
+        options:
+            text: "Maaf motor $(data.motorType) tersebut sedang tidak tersedia. Silahkan pilih tipe atau warna yang lain"
+    done:
+        type: text
+        options:
+            text: "Baiklah Nada proses pesanan kamu, selanjutnya kamu akan dihubungi oleh teman Nada untuk info lebih lanjut"
+    cancel:
+        type: text
+        options:
+            text: "Ok, Nada batalin ya"
+    akhiran:
+        type: text
+        options:
+            text: "Baiklah, silakan sapa Nada kembali jika sobat Nada butuh bantuan :)"
+    sayThanks:
+        type: text
+        options:
+            text: "Terima kasih sudah menggunakan layanan kami. Kalau butuh bantuan panggil Nada aja ya :)"
+    resetData:
+        type: command
+        options:
+            command: reset
+    displayOptions:
+        type: 'template'
+        options:
+            type: 'button'
+            items:
+                title: Nawa Dealer
+                text: 'Mau pilih motor yang lain?'
+                actions:
+                    -
+                        type: postback
+                        label: Ya
+                        text: Ya
+                        payload:
+                            menu: pilihLagi
+                    -
+                        type: postback
+                        label: Selesai
+                        text: Selesai
+                        payload:
+                            menu: sayThanks
+
+methods:
+    getType(ctx): "
+        var data = ctx.context.result;
+        var type;
+        var desc = '';
+        var number = 1;
+        for(let a in data){
+            type = data[a].type;
+            desc = desc + number + '. ' + type + '\\n';
+
+            number += 1;
+        }
+
+        ctx.context.type = desc;
+
+        return ctx;
+    "
+    getColor(ctx): "
+        var data = ctx.context.result;
+        ctx.data.confirm = data;
+        var order;
+        var confirmOrder;
+        var colorList;
+        var color;
+        var desc = '';
+        var number = 1;
+        for(let a in data){
+            colorList = data[a].color;
+            for(let b in colorList){
+                color = colorList[b].color_name;
+                desc = desc + number + '. ' + color + '\\n';
+                number += 1;
+            }    
+        }
+
+        ctx.context.color = desc;
+
+        return ctx;
+    "
+    # confirm(ctx): "
+    #     var color = ctx.context.colorId;
+    #     var type = ctx.context.typeId;
+    #     var data = ctx.data.order;
+    #     var color;
+    #     var getIdColor;
+    #     var getTypeId;
+    #     for(let a in data){
+    #         getIdColor = data.color;
+    #         if(color == getIdColor){
+    #             getIdColor = data.id_color;
+    #         }
+    #         getTypeId = data.type
+    #     }
+    #     ctx.context.colorId = getidColor;
+    #     ctx.context.typeId = getidType;
+    #     return ctx;
+    # "

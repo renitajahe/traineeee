@@ -1,0 +1,217 @@
+volatile: true    
+intents:
+    showDetailByButton:
+        initial: true
+        type: data  
+        condition: payload.menu == "showDetail"
+    showDetailByTyping:
+        initial: true
+        priority: 2
+        type: text
+        classifier:
+            nlu: intent
+            expression: "main == 'showDetail'"
+    inputNumber:
+        priority: 2
+        type: text
+        classifier:
+            nlu: contosoEntity
+            expression: number
+        attributes:
+            number:
+                path: number
+                nlu: contosoEntity
+    getApi:
+        priority: 2
+        type: command
+        condition: content == "getApi"
+    backToMenu:
+        type: data
+        condition: payload.menu = "askForMoreYes"
+    yes:
+        priority: 1
+        type: text 
+        classifier:
+            nlu: intent
+            expression: yesno == "yes"
+    no:
+        priority: 1
+        type: text 
+        classifier:
+            nlu: intent
+            expression: yesno == "no"
+    closing:
+        # initial: true
+        type: data  
+        condition: payload.menu == "closing"
+    fallback:
+        fallback: true
+
+states:
+    init:
+        initial: true
+        transitions:
+            callApiShowList:
+                condition: 'intent == "showDetailByButton" || intent == "showDetailByTyping"'
+            init:
+                fallback: true
+    callApiShowList:
+        action:
+            -   name: callApiShowList
+            -   name: command 
+                options: 
+                    command: getApi
+                    payload: 
+                        result: $(result)
+        transitions:
+            showToDoList:
+                condition: intent == "getApi" && payload.result 
+                mapping:
+                    context.result: payload.result.result
+            noTodo:
+                condition: intent == "getApi" && !payload.result
+                fallback: true
+    showToDoList:
+        enter: getList
+        action: 
+            - name: askTask
+        transitions:
+            giveDetails:
+                condition: intent == "inputNumber"
+                mapping:
+                    context.number: attributes.number
+            showToDoList:
+                fallback: true
+    giveDetails:
+        enter: getDetails
+        action: 
+            - name: giveDetails
+            - name: askForMore
+        transitions:
+            closing:
+                condition: intent == "closing" || intent == "no"
+            backToMenu:
+                condition: intent == "backToMenu" || intent =="yes"
+            giveDetails:
+                fallback: true
+    backToMenu:
+        action: goToMenu
+        end: true
+    closing:    
+        action: closing
+        end: true
+    noTodo:
+        action: 
+            - name: noTodo
+        end: true
+
+actions:
+    askask:
+        type: text
+        options:
+            text: Hai!
+    askTask:
+        type: text
+        options:
+            text: "Tugas mana yang mau kamu lihat detailnya? (tulis nomor tugas) \n
+                    $(context.list)"
+    noTodo:
+        type: text
+        options: 
+            text: "Kamu nggak punya tugas apapun yang harus dikerjakan"
+    askForMore:
+        type: 'template'
+        options:
+            type: 'button'
+            items:
+                title: Clara
+                text: 'Ada lagi yang Clara bisa bantu?'
+                actions:
+                    -
+                        type: postback
+                        label: Ya
+                        text: Ya
+                        payload:
+                            menu: askForMoreYes
+                    -
+                        type: postback
+                        label: Nggak
+                        text: Nggak
+                        payload:
+                            menu: closing
+    closing:
+        type: text
+        options:
+            text: Makasih udah chat Clara!     
+    goToMenu:
+        type: command
+        options:
+            command: goToMenu
+    giveDetails:
+        type: text
+        options: 
+            text: "Tanggal: $(context.date) \n
+                    Nama Tugas: $(context.taskName) \n
+                    Deskripsi: $(context.description) \n
+                    $(context.favorite)"
+    callApiShowList:
+        type: api
+        options:    
+            method: GET
+            headers:
+                Authorization: "Bearer $(data.token)"
+            body:
+                userId: $(data.UserId)
+            uri: 'https://dandung-contoso.herokuapp.com/showall'
+    
+methods:
+    getList(ctx): "
+        var data = ctx.context.result;
+        var todoList;
+        var desc = '';
+        var number = 1;
+        for(let a in data) {
+            todoList = data[a].name;
+            desc = desc + number + '. ' + todoList + '\\n';
+
+            number += 1;
+        }
+
+        ctx.context.list = desc;
+
+        return ctx;
+    "
+
+    getDetails(ctx): "
+        var data = ctx.context.result;
+        var number = ctx.context.number;
+        var no = Number('number');
+        var date;
+        var taskName;
+        var description;
+        var favorite;
+        var favo;
+        for(let a in data) {
+            no = number - 1;
+            date = data[no].date;
+            taskName = data[no].name;
+            description = data[no].description;
+            if (description == null) {
+                description = 'Tidak ada deskripsi'
+            }
+            
+            favorite = data[no].favorite;
+            if (favorite == 'True') {
+                favo = 'Tugas Favorit';
+            } else {
+                favo = 'Bukan Tugas Favorit';
+            }
+        }
+        
+        ctx.context.date = date;
+        ctx.context.taskName = taskName;
+        ctx.context.description = description;
+        ctx.context.favorite = favo;
+
+        return ctx;
+    "

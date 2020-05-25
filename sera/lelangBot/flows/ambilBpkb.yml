@@ -1,0 +1,151 @@
+volatile: true
+intents:
+    init:
+        initial: true
+        type: text
+        classifier:
+            nlu: intent
+            match: bpkb
+    initButton:
+        initial: true
+        type: data
+        condition: payload.menu == "ambilBpkb"
+    bpkbBenar:
+        priority: 1
+        type: text
+        classifier:
+            nlu: nomorBpkb
+            match: nopolBenarBpkb
+    bpkbSalah:
+        priority: 2
+        type: text
+        classifier:
+            nlu: nomorBpkb
+            match: nopolSalahBpkb
+    bpkbNotFound:
+        priority: 2
+        type: text
+        classifier:
+            nlu: nomorBpkb
+            match: nopolNotFoundBpkb
+    cobaUlang:
+        type: data  
+        condition: payload.menu == "inputUlang"
+    agent:
+        type: data
+        condition: payload.menu == "agent"
+    cancel:
+        priority: 1
+        type: text
+        classifier:
+            nlu: intent
+            match: cancel
+    fallback:
+        fallback: true
+
+states:
+    init:
+        initial: true
+        transitions:  
+            cancel:
+                condition: intent == "cancel"
+            showBpkb:
+                condition: intent == "init" || intent == "initButton"
+            init: 
+                fallback: true
+    showBpkb:
+        action: ambilBpkb
+        transitions:
+            nopolBenar:
+                condition: intent == "bpkbBenar"
+                mapping:
+                    context:
+                        nopol: content
+            nopolSalah:
+                condition: intent == "bpkbSalah" 
+                mapping:
+                    context:
+                        nopol: content
+            notFound:
+                fallback: true
+    notFound:
+        action: displayOptions
+        transitions:
+            showBpkb:
+                condition: intent == "cobaUlang"
+            sambungAgent:
+                condition: intent == "agent"
+        notFound:
+            fallback: true
+    sambungAgent:
+        action: 
+            - name: agent
+            - name: sayThanks
+        end: true
+    nopolBenar:
+        action: 
+            - name: benar
+            - name: sayThanks
+        end: true 
+    nopolSalah:
+        action:
+            - name: salah
+            - name: sayThanks
+        end: true
+    cancel:
+        end: true
+        action:
+            - name: cancel
+            - name: sayThanks
+        float:
+            condition: intent == "cancel"
+        
+actions:
+    ambilBpkb:
+        type: text
+        options:
+            text: "Silakan masukkan Nomor Polisi unit yang kamu menangkan" 
+    notFound:
+        type: text
+        options:
+            text: "Nomor Polisi yang kamu masukan tidak ditemukan, masukan nomor yang benar atau silakan bicara dengan agent kami"
+    benar: 
+        type: text
+        options:
+            text: "BPKB Nomor Polisi $(context.nopol) sudah dapat diambil di lokasi yang telah ditentukan"
+    salah:
+        type: text
+        options:
+            text: "BPKB Nomor Polisi $(context.nopol) belum tersedia, silakan cek kembali beberapa saat kedepan"
+    agent:
+        type: text
+        options:
+            text: "Kamu akan segera dihubungi dengan Agent Customer Service kami"
+    displayOptions:
+        type: 'template'
+        options:
+              type: 'button'
+              items:
+                  title: options
+                  text: 'Nomor Polisi yang kamu masukan tidak ditemukan, masukkan nomor yang benar atau silahkan bicara dengan agent kami.'
+                  actions:
+                      -
+                          type: postback
+                          label: Coba Ulang
+                          text: Coba Ulang
+                          payload:
+                              menu: inputUlang
+                      -
+                          type: postback
+                          label: Sambung Agent
+                          text: Sambung Agent 
+                          payload:
+                              menu: agent
+    cancel:
+        type: text
+        options:
+            text: "Ok, transaksi dibatalkan. Terima kasih telah memilih layanan kami"
+    sayThanks:
+        type: text
+        options:
+            text: "Ok, kalau ada yang ingin ditanyakan, sapa Hibrid aja ya" 

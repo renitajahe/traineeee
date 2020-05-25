@@ -1,0 +1,48 @@
+
+    giveEmail:
+        attributes:
+            name:
+                nlu: emailAddress
+                path: name
+            who:
+                nlu: emailAddress
+                path: email
+    givePhone:
+        type: text
+    giveAddress:
+        type: text
+
+emailAddress:
+      type: regex
+      options:
+          regex:
+              name: 'nama email saya (.+)'
+              email: 'w+@w+.w+'
+
+phone:
+            - 0
+            - 1
+            - 2
+            - 3
+            - 4
+            - 5
+            - 6
+            - 7
+            - 8
+            - 9
+        'yes':
+            - iya
+            - ya
+            - yup
+            - oke
+            - benar
+            - bener
+            - ok
+            - oke
+            - betul
+            - right
+        'no':
+            - salah
+            - bukan
+            - wrong
+            - tidak

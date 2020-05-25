@@ -1,0 +1,181 @@
+schema: kata.ai/schema/kataml/1.0
+name: Nawa Dealer
+desc: Nawa Dealer
+id: Nawa-Dealer-renitajahe
+lang: id
+version: 0.0.1
+flows:
+    fallback: $include(./flows/fallback.yml)
+    motor: $include(./flows/motor.yml)
+    menu: $include(./flows/menu.yml)
+    faq: $include(./flows/faq.yml)
+    reset: $include(./flows/reset.yml)
+    lokasi: $include(./flows/lokasi.yml)
+nlus:
+    intent:
+        type: keyword
+        options:
+            keywords:
+                greet:
+                    - hi
+                    - hai
+                    - helo
+                    - hello
+                    - halo
+                    - hei
+                    - woi
+                    - nada
+                beliMotor:
+                    - beli motor
+                    - beli
+                    - motor
+                faq:
+                    - faq
+                selesai:
+                    - selesai
+                    - done
+                    - udahan
+                selesaiMotor:
+                    - yoi
+                otherLocation:
+                    - lokasi lain
+                pilihLagi:
+                    - pilih
+                    - milih
+                lokasi:
+                    - lokasi
+                    - location
+                    - lks
+                menu:
+                    - menu
+                    - sudah
+                    - udh
+                    - udah
+                    - uda
+                    - sdh
+                gender:
+                    - p
+                    - perempuan
+                    - cewe
+                    - laki laki
+                    - laki-laki
+                    - cowo
+                    - wanita
+                    - pria
+                    - woman
+                    - women
+                    - ladies
+                    - gentleman
+                    - male
+                    - female
+                    - l
+                    - P
+                    - L
+                profile:
+                    - belum
+                    - belom
+                    - belum pernah
+                    - 'no'
+                    - not yet
+                    - blm
+                typeOptions:
+                    - tipenya apa aja
+                    - ada apa aja
+                    - ada tipe apa
+                    - adanya apa
+                    - adanya tipe apa
+                    - adanya tipe apa aja
+    alamat:
+        type: keyword
+        options:
+            keywords:
+                Jakarta:
+                    - dki
+                    - dki jakarta
+                    - jkt
+                    - jakarta
+                    - kota jakarta
+                Bandung:
+                    - bandung
+                    - kota bandung
+                    - bdg
+                other:
+                    - other
+    nawaDealer:
+        type: nl
+        options:
+            nluId: 'renitajahe:Nawa-Dealer'
+            token: 17dbe126-c158-4c1e-a6c2-3d660a717362
+            output: phrase
+            entity: kata
+            threshold: 0.5
+    nl_main:
+        type: nl
+        options:
+            nluId: 'renitajahe:nl_main'
+            token: 2c0127dc-4f49-4c62-8727-25b2b4ac0f71
+            output: value
+            threshold: 0.5
+    nl-noyes:
+        type: nl
+        options:
+            nluId: 'renitajahe:nl-noyes'
+            token: 7bf62652-a488-4a69-8e9e-4d3cbd8267e2
+            threshold: 0.5
+            flatten: true
+    noyes:
+        type: nl
+        options:
+            nluId: 'renitajahe:nl-noyes'
+            token: 7bf62652-a488-4a69-8e9e-4d3cbd8267e2
+            output: value
+            threshold: 0.5
+            flatten: true
+    nl_produk:
+        type: nl
+        options:
+            nluId: 'renitajahe:nl_produk'
+            token: 0f85b2f6-6cb2-471e-9614-8143b95d5dc9
+            threshold: 0.5
+            flatten: true
+    produk:
+        type: nl
+        options:
+            nluId: 'renitajahe:nl_produk'
+            token: 0f85b2f6-6cb2-471e-9614-8143b95d5dc9
+            output: value
+            threshold: 0.5
+            flatten: true
+    nl_warna:
+        type: nl
+        options:
+            nluId: 'renitajahe:nl_produk'
+            token: 0f85b2f6-6cb2-471e-9614-8143b95d5dc9
+            threshold: 0.5
+            flatten: true
+    warna:
+        type: nl
+        options:
+            nluId: 'renitajahe:nl_produk'
+            token: 0f85b2f6-6cb2-471e-9614-8143b95d5dc9
+            output: value
+            threshold: 0.5
+            flatten: true
+    questions:
+        type: keyword
+        options:
+            keywords:
+                bisaCicil:
+                    - nyicil
+                    - cicilan
+                    - dicicil
+                    - cicil
+                    - kredit
+                logo:
+                    - logo
+                    - stiker
+                garansi:
+                    - garansi
+                motorSecond:
+                    - second
+tag: null

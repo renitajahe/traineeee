@@ -1,0 +1,22 @@
+active: true
+fallback: true
+intents:
+    fallbackIntent:
+        fallback: true
+        initial: false
+        type: text
+
+states:
+    init: 
+        action: saySorry
+        transitions:
+            init:
+                fallback: true
+        initial: true
+        end: true 
+      
+actions:   
+    saySorry:
+        type: text
+        options:
+            text: "Maaf Nanda tidak mengerti maksud kamu :("

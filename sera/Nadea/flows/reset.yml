@@ -1,0 +1,39 @@
+volatile: true
+intents:
+    resetText:
+        initial: true
+        type: command
+        command: content == "reset"
+    resetData:
+        initial: true
+        priority: 10
+        condition:
+            - "content == '#katafuadresetulangdariawal'"
+            - "content == '#katafuad'"
+            - "content == 'reset'"
+            - "content == 'Reset'"
+
+states:
+    init:
+        initial: true
+        transitions:
+            deleteAll:
+                condition: intent == "resetData" || intent == "resetText"
+            init:
+                fallback: true
+    deleteAll:
+        enter: deleteAllData
+        action: deleted
+        end: true
+
+actions:
+    deleted:
+        type: text
+        options:
+            text: "Data kamu sudah Nada hapus yaa, silahkan sapa Nada kembali kalau kamu butuh bantuan"
+methods:
+    deleteAllData(ctx): "
+        ctx.data = {};
+
+        return ctx;
+  "

@@ -1,0 +1,26 @@
+volatile: true
+intents:
+    tes:
+        initial: true
+        type: text
+        classifier:
+            nlu: intent
+            match: greet
+
+states:
+    init:
+        initial: true
+        transitions:
+            tes:
+                condition: intent == "tes"
+            init:
+                fallback: true
+    tes:
+        action: tes
+        end: true
+      
+actions:
+    tes:
+        type: text
+        options:
+            text: "Tesssssssss"

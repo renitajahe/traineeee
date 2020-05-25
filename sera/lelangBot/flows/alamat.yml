@@ -1,0 +1,209 @@
+volatile: true
+intents:
+    init:
+        initial: true
+        type: text
+        classifier:
+            nlu: intent
+            match: alamatt
+    initButton:
+        initial: true
+        type  : data
+        condition: payload.menu == "alamat"
+    kota:
+        priority: 1
+        type: text 
+        classifier:
+            nlu: alamat
+        attributes:
+            kota:
+                nlu: alamat
+    inputKota:
+        type: text
+        classifier:
+            nlu: alamat
+        attributes:
+            inputKota:
+                nlu: alamat
+    inputUlang:
+        initial: true
+        type: data
+        condition: payload.menu == "cobaUlang" && context.$lastState == "notFound"
+    selesai:
+        initial: true
+        type: data
+        condition: payload.menu == "selesai" && context.$lastState == "notFound"
+    cancel:
+        priority: 1
+        type: text
+        classifier:
+            nlu: intent
+            match: cancel
+    fallback:
+        fallback: true
+
+states:
+    init:
+        initial: true
+        transitions: 
+            selesai:
+                condition: intent == "selesai"
+            cancel:
+                condition: intent == "cancel"
+            showAddress:
+                condition: intent == "init" || intent == "initButton" || intent == "inputUlang"
+            init: 
+                fallback: true
+    showAddress:
+        action: alamat
+        transitions:
+            city:
+                condition: intent == "kota"
+                mapping:
+                    context.city: attributes.kota
+            notFound:
+                fallback: true 
+    city:
+        action:
+            -   name: jakarta
+                condition: attributes.kota == "Jakarta"
+            -   name: bandung
+                condition: attributes.kota == "Bandung"
+            -   name: surabaya
+                condition: attributes.kota == "Surabaya"
+            -   name: semarang
+                condition: attributes.kota == "Semarang"
+            -   name: palembang
+                condition: attributes.kota == "Palembang"
+            -   name: medan
+                condition: attributes.kota == "Medan"
+            -   name: pekanbaru
+                condition: attributes.kota == "Pekanbaru"
+            -   name: balikpapan
+                condition: attributes.kota == "Balikpapan"
+            -   name: banjarmasin
+                condition: attributes.kota == "Banjarmasin"
+            -   name: makassar
+                condition: attributes.kota == "Makassar"
+            -   name: sayThanks            
+        end: true
+    notFound:
+        action: 
+            - name: alamatLain
+            - name: saran
+            - name: suggestion
+        end: true
+    selesai:
+        action: sayThanks
+        end: true
+    cancel:
+        end: true
+        action:
+            - name: cancel
+            - name: sayThanks
+        float:
+            condition: intent == "cancel"
+actions:
+    alamat:
+        type: text
+        options:
+            text: "Silakan masukkan nama kota yang paling dekat dengan lokasimu" 
+    jakarta:
+        type: text
+        options:
+            text: " Lokasi Lelang & Open House: 
+                Pool IBID Jl.Ciputat Raya No.100 Kebayoran Lama, Jakarta Selatan"
+    bandung:
+        type: text
+        options:
+            text: " Lokasi Lelang & Open House: 
+                Jl. Karapitan 109 Buah Batu Kel.Burangrang Bandung"
+    surabaya:
+        type: text
+        options:
+            text: " Lokasi Lelang & Open House: 
+                GRAHA ORENZ Jl. Wonorejo Timur No. 99 Surabaya"
+    semarang:
+        type: text
+        options:
+            text: " Lokasi Lelang & Open House: 
+                Jl. Brigjen Sudiarto Majapahit No.571 Kel.Pedurungan Kidul Kec. Pedurungan Semarang"
+    palembang:
+        type: text
+        options:
+            text: " Lokasi Lelang:
+                Jl. Alamsyah Ratu Prawiranegara No.39 Bukit Baru Kec.Ilir Barat 2 Palembang 
+                    Lokasi Open House:
+                Jl. Soekarno Hatta No. 414 Kel. Karya Baru, Kec. Alang-alang Lebar ( samping PT Waskita ) Kota Palembang"
+    medan:
+        type: text
+        options:
+            text: " Lokasi Lelang & Open House: 
+                Jl.Asrama No.19 Samping Kantor Pajak, Pondok Kelapa Medan"
+    pekanbaru:
+        type: text
+        options:
+            text: " Lokasi Lelang & Open House: 
+                Jl. Soekarno Hatta KM 9 No. 46A, Sidomulyo Barat - Pekanbaru"
+    balikpapan:
+        type: text
+        options:
+            text: " Lokasi Lelang & Open House: 
+                Jl. MT. Haryono No. 140 RT 84, Kel. Gn. Bahagia  (Sebelah kanan pintu masuk Perum BDI)"
+    banjarmasin:
+        type: text
+        options:
+            text: " Lokasi Lelang & Open House: 
+                Grha TRAC, Jl. A. Yani KM.17,9 Rt.11 Rw.03, Kel. Lkamusan Ulin Barat Kec. Liang Anggang, Banjarbaru Banjarmasin"
+    makassar:
+        type: text
+        options:
+            text: " Lokasi Lelang: 
+                Hotel Amaris Jl. A. P. Pettarani No.17, Sinrijala, Makassar
+                    Lokasi Open House: 
+                Jl. Letjend Hertasning Baru (Samping PT Catur Putra Harmonis)"
+    alamatLain:
+        type: text
+        options:
+            text: "Maaf, untuk saat ini lokasi tersebut belum tersedia"
+    saran:
+        type: text
+        options:
+            text: "Silakan masukkan kembali nama salah satu kota dibawah ini yang terdekat dengan lokasi Anda:\n
+                    - Jakarta\n
+                    - Bandung\n
+                    - Surabaya\n
+                    - Semarang\n
+                    - Palembang\n
+                    - Medan\n
+                    - Pekanbaru\n
+                    - Balikpapan\n
+                    - Makassar"
+    suggestion:
+        type: template
+        options:
+              type: button
+              items:
+                  title: options
+                  text: "Silahkan masukkan nama kota terdekat dengan lokasi anda atau klik tombol selesai untuk mengakhiri sesi"
+                  actions:
+                      -
+                          type: postback
+                          label: Masukkan nama kota terdekat
+                          text: Masukkan nama kota terdekat
+                          payload:
+                              menu: cobaUlang
+                      -
+                          type: postback
+                          label: Selesai
+                          text: Selesai 
+                          payload:
+                              menu: selesai
+    cancel:
+        type: text
+        options:
+            text: "Ok, transaksi dibatalkan. Terima kasih telah memilih layanan kami"
+    sayThanks:
+        type: text
+        options:
+            text: "Ok, kalau ada yang ingin ditanyakan, sapa Hibrid aja ya" 

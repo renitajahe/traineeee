@@ -1,0 +1,592 @@
+volatile: true 
+intents:
+    init:
+        initial: true
+        type: text
+        classifier:
+            nlu: intent
+            match: faq
+    inputQuestions:
+        priority: 3
+        type: text
+        classifier:
+            nlu: questions
+            expression: question
+        attributes: 
+            giveAllUnit: 
+                nlu: questions
+                path: allunit
+                # options:
+                #     output: dict
+            inputQuestions: 
+                nlu: questions
+                path: question
+            giveUnit: 
+                nlu: questions
+                path: unit
+    giveUnit:
+        priority: 5
+        type: text
+        classifier:
+            nlu: questions 
+            expression: unit
+        attributes: 
+            giveUnit: 
+                nlu: questions
+                path: unit
+        condition: 'context.$state == "askUnit"'       
+    giveAllUnit:
+        priority: 5
+        type: text
+        classifier:
+            nlu: questions 
+            expression: allUnit
+        attributes: 
+            giveAllUnit: 
+                nlu: questions
+                path: allUnit
+    inputInstructions:
+        priority: 3
+        type: text
+        classifier:
+            nlu: questions 
+            expression: instruction
+        attributes: 
+            inputInstructions: 
+                nlu: questions
+                path: instruction
+            giveAllUnit: 
+                nlu: questions
+                path: allunit
+            giveUnit: 
+                nlu: questions
+                path: unit
+    benar:
+        type: text
+        priority: 3
+        classifier:
+            nlu: questions
+            expression: yesno == "yes"
+        attributes: 
+            benar: 
+                nlu: questions
+                path: yesno
+        condition: context.$state == "withHumanAgent"
+    salah:
+        type: text
+        priority: 3
+        classifier:
+            nlu: questions
+            expression: yesno == "no"
+        attributes: 
+            salah: 
+                nlu: questions
+                path: yesno
+        condition: context.$state == "withHumanAgent"
+    getApi:
+        priority: 3
+        type: command
+        condition: content == "getApi"
+    fallback:
+        fallback: true
+
+states:
+    init:
+        initial: true
+        transitions:
+            greetingAsk:
+                condition: intent == "init" 
+            init:
+                fallback: true
+    greetingAsk:
+        action: greetingAsk
+        transitions:
+            callApiNewModel:
+                condition: (intent == "inputQuestions" && attributes.inputQuestions == "modelMotorBaru") || (intent == "inputInstructions" && attributes.inputInstructions == "modelMotorBaru")
+                mapping:
+                    context.variant: attributes.giveAllUnit
+            callApiLaunchDate:
+                condition: (intent == "inputQuestions" && attributes.inputQuestions == "tanggalPeluncuran" && attributes.giveUnit) || (intent == "inputInstructions" && attributes.inputInstructions == "tanggalPeluncuran" && attributes.giveUnit)
+                mapping: 
+                    context.unit: attributes.giveUnit
+            askUnit:
+                condition: (intent == "inputQuestions" && attributes.inputQuestions == "tanggalPeluncuran" && !attributes.giveUnit) || (intent == "inputInstructions" && attributes.inputInstructions == "tanggalPeluncuran" && !attributes.giveUnit)
+            callApiMotorImport:
+                condition: (intent == "inputQuestions" && attributes.inputQuestions == "produkImpor") || (intent == "inputInstructions" && attributes.inputInstructions == "produkImpor")
+            withHumanAgent:
+                condition: (intent == "inputQuestions" &&
+                           (attributes.inputQuestions == "tanggalPerakitan" || 
+                           attributes.inputQuestions == "pemberianNama" ||
+                           attributes.inputQuestions == "infoKodeMotor" || 
+                           attributes.inputQuestions == "beritaTvKoran" || 
+                           attributes.inputQuestions == "prosedurStandar" ||
+                           attributes.inputQuestions == "informasiPerubahanPelanggan")) ||
+                           (intent == "inputInstructions" &&
+                           (attributes.inputInstructions == "tanggalPerakitan" || 
+                           attributes.inputInstructions == "pemberianNama" ||
+                           attributes.inputInstructions == "infoKodeMotor" || 
+                           attributes.inputInstructions == "beritaTvKoran" || 
+                           attributes.inputInstructions == "prosedurStandar" ||
+                           attributes.inputInstructions == "informasiPerubahanPelanggan"))
+
+            toAgent:
+                condition: (intent == "inputQuestions" && attributes.inputQuestions == "testPengemudi") ||
+                           (intent == "inputInstructions" && attributes.inputInstructions == "testPengemudi")
+            toClosing:
+                condition: (intent == "inputQuestions" &&
+                           (attributes.inputQuestions == "prosesKeuangan" ||
+                           attributes.inputQuestions == "infoBangunanDealer" ||
+                           attributes.inputQuestions == "pengurusanSuratMotor" ||
+                           attributes.inputQuestions == "infoBangunanAhass" ||
+                           attributes.inputQuestions == "transportAlternatif" ||
+                           attributes.inputQuestions == "perubahanModifikasi" ||
+                           attributes.inputQuestions == "bukuPanduanPemilik" ||
+                           attributes.inputQuestions == "bukuPanduanServis" ||
+                           attributes.inputQuestions == "partKatalog" ||
+                           attributes.inputQuestions == "katalogModelLama" ||
+                           attributes.inputQuestions == "callCenter" ||
+                           attributes.inputQuestions == "garansiLainnya" ||
+                           attributes.inputQuestions == "asuransi" ||
+                           attributes.inputQuestions == "website" ||
+                           attributes.inputQuestions == "kegiatanSosialSponsor" ||
+                           attributes.inputQuestions == "caraPendirianAhass" ||
+                           attributes.inputQuestions == "caraPendirianDealer" ||
+                           attributes.inputQuestions == "informasiTempatSafetyRiding" || 
+                           attributes.inputQuestions == "lamaranKerja" || 
+                           attributes.inputQuestions == "kunjunganIndustri" ||
+                           attributes.inputQuestions == "csr" ||
+                           attributes.inputQuestions == "pengajuanSponsorship")) ||
+                           (intent == "inputInstructions" &&
+                           (attributes.inputInstructions == "prosesKeuangan" ||
+                           attributes.inputInstructions == "infoBangunanDealer" ||
+                           attributes.inputInstructions == "pengurusanSuratMotor" ||
+                           attributes.inputInstructions == "infoBangunanAhass" ||
+                           attributes.inputInstructions == "transportAlternatif" ||
+                           attributes.inputInstructions == "perubahanModifikasi" ||
+                           attributes.inputInstructions == "bukuPanduanPemilik" ||
+                           attributes.inputInstructions == "bukuPanduanServis" ||
+                           attributes.inputInstructions == "partKatalog" ||
+                           attributes.inputInstructions == "katalogModelLama" ||
+                           attributes.inputInstructions == "callCenter" ||
+                           attributes.inputInstructions == "garansiLainnya" ||
+                           attributes.inputInstructions == "asuransi" ||
+                           attributes.inputInstructions == "website" ||
+                           attributes.inputInstructions == "kegiatanSosialSponsor" ||
+                           attributes.inputInstructions == "caraPendirianAhass" ||
+                           attributes.inputInstructions == "caraPendirianDealer" ||
+                           attributes.inputInstructions == "informasiTempatSafetyRiding" || 
+                           attributes.inputInstructions == "lamaranKerja" || 
+                           attributes.inputInstructions == "kunjunganIndustri" ||
+                           attributes.inputInstructions == "csr" ||
+                           attributes.inputInstructions == "pengajuanSponsorship"))
+            greetingAsk:
+                fallback: true
+    callApiNewModel: 
+        action: 
+            -   name: callApiNewModel
+            -   name: command
+                options: 
+                    command: getApi
+                    payload: 
+                        result: $(result)
+        transitions:
+            newModel:
+                condition: intent == "getApi" && payload.result
+                mapping:
+                    context.result: payload.result.data
+            noModel:
+                condition: intent == "getApi" && !payload.result
+    newModel:
+        enter: getVariant
+        action:     
+            - name: newModel
+            - name: promo
+        end: true
+    noModel:
+        action:     
+            - name: noModel
+            - name: promo
+        end: true
+    askUnit:
+        action: 
+            - name: askUnit
+        transitions: 
+            callApiLaunchDate:
+                condition: intent == "giveUnit"
+                mapping: 
+                    context.unit: attributes.giveUnit
+            askUnit: 
+                fallback: true
+    callApiLaunchDate:
+        action: 
+            -   name: callApiLaunchDate
+            -   name: command
+                options: 
+                    command: getApi
+                    payload: 
+                        result: $(result)
+        transitions:
+            showLaunchDate:
+                condition: intent == "getApi" && payload.result
+                mapping: 
+                    context:
+                        launchDate: payload.result.data.released_date
+            fail:
+                condition: intent == "getApi" && !payload.result
+    showLaunchDate:
+        action: 
+            - name: showLaunchDate 
+            - name: closing
+        end: true
+    fail:
+        action: fail
+        end: true
+    callApiMotorImport:
+        action: 
+            -   name: callApiMotorImport
+            -   name: command
+                options: 
+                    command: getApi
+                    payload: 
+                        result: $(result)
+        # end: true
+        transitions:
+            showImport:
+                condition: intent == "getApi" && payload.result
+                mapping: 
+                    context:
+                        result: payload.result.data
+            fail:
+                condition: intent == "getApi" && !payload.result
+    showImport:
+        enter: getMotorImport
+        action:
+            - name: showImport
+            - name: closing
+        end: true
+    withHumanAgent:
+        action:
+            -   name: tglPerakitan
+                condition: intent == "inputQuestions" && (attributes.inputQuestions == "tanggalPerakitan" || attributes.inputInstructions == "tanggalPerakitan")
+            -   name: pemberianNama
+                condition: intent == "inputQuestions" && (attributes.inputQuestions == "pemberianNama" || attributes.inputInstructions == "pemberianNama")
+            -   name: infoKodeMotor
+                condition: intent == "inputQuestions" && (attributes.inputQuestions == "infoKodeMotor"|| attributes.inputInstructions == "infoKodeMotor")
+            -   name: beritaTvKoran
+                condition: intent == "inputQuestions" && (attributes.inputQuestions == "beritaTvKoran" || attributes.inputInstructions == "beritaTvKoran")
+            -   name: prosedurStandar
+                condition: intent == "inputQuestions" && (attributes.inputQuestions == "prosedurStandar" || attributes.inputInstructions == "prosedurStandar")
+            -   name: informasiPerubahanPelanggan
+                condition: intent == "inputQuestions" && (attributes.inputQuestions == "informasiPerubahanPelanggan" || attributes.inputInstructions == "informasiPerubahanPelanggan")
+            -   name: humanAgent  
+        transitions:
+            agent:
+                condition: intent == "benar"
+            closing:
+                condition: intent == "salah"
+            questions:
+                fallback: true
+    toAgent:
+        action: 
+            -   name: testPengemudi
+                condition: intent == "inputQuestions" && attributes.inputQuestions == "testPengemudi"
+            -   name: agent
+        end: true
+    agent:
+        action: agent
+        end: true
+    toClosing:
+        action: 
+            -   name: prosesKeuangan
+                condition: intent == "inputQuestions" && (attributes.inputQuestions == "prosesKeuangan" || attributes.inputInstructions == "prosesKeuangan")
+            -   name: infoBangunanDealer
+                condition: intent == "inputQuestions" && (attributes.inputQuestions == "infoBangunanDealer" || attributes.inputInstructions == "infoBangunanDealer")
+            -   name: pengurusanSuratMotor  
+                condition: intent == "inputQuestions" && (attributes.inputQuestions == "pengurusanSuratMotor" || attributes.inputInstructions == "pengurusanSuratMotor")
+            -   name: infoBangunanAhass
+                condition: intent == "inputQuestions" && (attributes.inputQuestions == "infoBangunanAhass" || attributes.inputInstructions == "infoBangunanAhass")
+            -   name: transportAlternatif
+                condition: intent == "inputQuestions" && (attributes.inputQuestions == "transportAlternatif" || attributes.inputInstructions == "transportAlternatif")
+            -   name: perubahanModifikasi
+                condition: intent == "inputQuestions" && (attributes.inputQuestions == "perubahanModifikasi" || attributes.inputInstructions == "perubahanModifikasi")
+            -   name: bukuPanduanPemilik
+                condition: intent == "inputQuestions" && (attributes.inputQuestions == "bukuPanduanPemilik" || attributes.inputInstructions == "bukuPanduanPemilik")
+            -   name: bukuPanduanServis
+                condition: intent == "inputQuestions" && (attributes.inputQuestions == "bukuPanduanServis" || attributes.inputInstructions == "bukuPanduanServis")
+            -   name: partKatalog
+                condition: intent == "inputQuestions" && (attributes.inputQuestions == "partKatalog" || attributes.inputInstructions == "partKatalog")
+            -   name: oldKatalog
+                condition: intent == "inputQuestions" && (attributes.inputQuestions == "katalogModelLama" || attributes.inputInstructions == "katalogModelLama")
+            -   name: callCenter
+                condition: intent == "inputQuestions" && (attributes.inputQuestions == "callCenter" || attributes.inputInstructions == "callCenter")
+            -   name: garansiLainnya
+                condition: intent == "inputQuestions" && (attributes.inputQuestions == "garansiLainnya" || attributes.inputInstructions == "garansiLainnya")
+            -   name: asuransi
+                condition: intent == "inputQuestions" && (attributes.inputQuestions == "asuransi" || attributes.inputInstructions == "asuransi")
+            -   name: website
+                condition: intent == "inputQuestions" && (attributes.inputQuestions == "website" || attributes.inputInstructions == "website")
+            -   name: kegiatanSosialSponsor
+                condition: intent == "inputQuestions" && (attributes.inputQuestions == "kegiatanSosialSponsor" || attributes.inputInstructions == "kegiatanSosialSponsor")
+            -   name: caraPendirianAhass
+                condition: intent == "inputQuestions" && attributes.inputQuestions == "caraPendirianAhass"
+            -   name: caraPendirianDealer
+                condition: intent == "inputQuestions" && attributes.inputQuestions == "caraPendirianDealer"
+            -   name: informasiTempatSafetyRiding
+                condition: intent == "inputQuestions" && attributes.inputQuestions == "informasiTempatSafetyRiding"
+            -   name: lamaranKerja
+                condition: intent == "inputQuestions" && attributes.inputQuestions == "lamaranKerja"
+            -   name: kunjunganIndustri
+                condition: intent == "inputQuestions" && attributes.inputQuestions == "kunjunganIndustri"
+            -   name: csr
+                condition: intent == "inputQuestions" && attributes.inputQuestions == "csr"
+            -   name: pengajuanSponsorship
+                condition: intent == "inputQuestions" && attributes.inputQuestions == "pengajuanSponsorship"
+            -   name: closing        
+        end: true
+    closing:
+        action: closing
+        end: true 
+    
+
+actions:
+    greetingAsk:
+        type: text
+        options:
+            text: "Apa yang mau kamu tanyakan nih?"
+    humanAgent:
+        type: text
+        options:
+            text: "Anda akan diarahkan dengan human agent, ketik 'iya' apabila Anda ingin lanjut"
+    askUnit:
+        type: text
+        options:
+            text: "Kamu mau tahu tanggal peluncuran motor apa?"
+    modelMotorBaru:
+        type: text
+        options:
+            text: "Ada dong!"
+    newModel:
+        type: text
+        options:
+            text: "Untuk nama model baru $(context.variant) adalah sebagai berikut : \n
+                    $(context.allVariant) \n
+                    $(context.allUnit)"
+    noModel:
+        type: text
+        options:
+            text: "Mohon Maaf Untuk nama model baru $(context.variant) kamu belum ada dikami"
+    promo:
+        type: text
+        options:
+            text: "Ada promo nih!"
+    oldKatalog:
+        type: text
+        options:
+            text: "silakan klik link ini untuk melihat model motor lama."
+    beritaTvKoran:
+        type: text
+        options:
+            text: "(Berita TV/Koran)"
+    tglPerakitan:
+        type: text
+        options:
+            text: "29 Februari 2020"
+    pemberianNama:
+        type: text
+        options:
+            text: "(Pemberian Nama)"
+    infoKodeMotor:
+        type: text
+        options:
+            text: "(Info Kode)"
+    prosedurStandar:
+        type: text
+        options:
+            text: "(Prosedur Standar)"
+    informasiPerubahanPelanggan:
+        type: text
+        options:
+            text: "(Informasi Perubahan Pelanggan)"
+    prosesKeuangan:
+        type: text
+        options:
+            text: "(Proses Keuangan)"
+    infoBangunanDealer:
+        type: text
+        options:
+            text: "Regular\n 
+                    Premium\n 
+                    Big Bike"
+    pengurusanSuratMotor:
+        type: text
+        options:
+            text: "(Pengurusan Surat Motor)"
+    infoBangunanAhass:
+        type: text
+        options:
+            text: "Regular\n 
+                    Premium\n 
+                    Big Bike"
+    transportAlternatif:
+        type: text
+        options:
+            text: "(Transport Alternatif)"
+    perubahanModifikasi:
+        type: text
+        options:
+            text: "(Perubahan/Modifikasi)"
+    bukuPanduanPemilik:
+        type: text
+        options:
+            text: "(Buku Panduan Pemilik)"
+    bukuPanduanServis:
+        type: text
+        options:
+            text: "(Buku Panduan Pemilik)"
+    partKatalog:
+        type: text
+        options:
+            text: "(Part Katalog)"
+    callCenter:
+        type: text
+        options:
+            text: "(10 call center)"
+    garansiLainnya:
+        type: text
+        options:
+            text: "(Garansi Lainnya)"
+    asuransi:
+        type: text
+        options:
+            text: "(Asuransi)"
+    website:
+        type: text
+        options:
+            text: "(Website)"
+    kegiatanSosialSponsor:
+        type: text
+        options:
+            text: "(Kegiatan Sosial/Sponsor)"
+    testPengemudi:
+        type: text
+        options:
+            text: "Untuk lokasi test ride tergantung main dealer masing-masing"
+    caraPendirianAhass:
+        type: text
+        options:
+            text: "FAQ"
+    caraPendirianDealer:
+        type: text
+        options:
+            text: "FAQ"
+    informasiTempatSafetyRiding:
+        type: text
+        options:
+            text: "FAQ"
+    lamaranKerja:
+        type: text
+        options:
+            text: "FAQ"
+    kunjunganIndustri:
+        type: text
+        options:
+            text: "FAQ"
+    csr:
+        type: text
+        options:
+            text: "FAQ"
+    pengajuanSponsorship:
+        type: text
+        options:
+            text: "FAQ"
+    komunitas:
+        type: text
+        options:
+            text: "(Komunitas)"
+    agent:
+        type: text
+        options:
+            text: "Halo!"
+    closing:
+        type: text
+        options:
+            text: "Terimakasih sudah menggunakan layanan kami."
+    fail:
+        type: text
+        options:    
+            text: "Oops, something went wrong"
+    showLaunchDate:
+        type: text
+        options:
+            text: "$(context.launchDate)"
+    showImport:
+        type: text
+        options:
+            text: "$(context.import)"
+    callApiLaunchDate:
+        type: api
+        options:
+            method: POST
+            formData:  
+                variant_name: CBR 150 R
+            uri: 'https://dev-ahm.nawatech.co/api/v1/api/motor/launch_date'
+    callApiNewModel:
+        type: api
+        options:
+            method: GET
+            uri: 'https://dev-ahm.nawatech.co/api/v1/api/infoproduk/newmodel'
+    callApiMotorImport:
+        type: api
+        options:
+            method: GET
+            uri: 'https://dev-ahm.nawatech.co/api/v1/api/importproduct/get_import'
+        
+methods:
+    getMotorImport(ctx): "
+        var data = ctx.context.result;
+        var allVariant = '';
+        var desc = '';
+        var number = 1;
+        for (let a in data) {
+            desc = data[a].variant_name;
+            allVariant = allVariant + number + '. ' + desc + '\\n';
+            number += 1;
+        }
+
+        ctx.context.import = allVariant;
+
+        return ctx;
+    "
+    getVariant(ctx): "
+        var data = ctx.context.result;
+        var variant ='';
+        var inputUnit = ctx.context.variant;
+        var giveAllUnit = '';
+        if(ctx.context.variant){
+            giveAllUnit = ctx.context.variant;
+        }
+        var unit = '';
+        let productCounter = 0;
+        for (let a in data) {
+            if(giveAllUnit != ''){
+                let unitName = data[a].product_unit.unit_name;
+                if(giveAllUnit != unitName.toLowerCase()){
+                    continue;
+                }
+            }
+            if(productCounter > 0){
+                variant = variant + ', ' + data[a].variant_name;
+                unit = unit + ', ' + data[a].product_unit.unit_name;
+                productCounter += 1;
+            }else{
+                variant = data[a].variant_name;
+                unit = data[a].product_unit.unit_name;
+                productCounter += 1;
+            }
+        }
+
+        ctx.context.allVariant = variant;
+        ctx.context.allUnit = unit;
+
+        return ctx;
+    "

@@ -1,0 +1,254 @@
+volatile: true
+intents:
+    init:
+        initial: true
+        type: text
+        classifier:
+            nlu: intent
+            match: faq
+    initButton:
+        initial: true
+        type: data  
+        condition: payload.menu == "faq"
+    inputQuestion:
+        priority: 2
+        type: text
+        classifier:
+            nlu: questions
+        attributes:
+            inputQuestion:
+                nlu: questions
+    reAskText:
+        type: text
+        priority: 3
+        classifier:
+            nlu: noyes
+            expression: yesno == "yes"
+        attributes: 
+            yesno: 
+                nlu: nl-noyes
+                path: yesno
+        condition: context.$state == "questions"
+        # initial: true
+        # priority: 2
+        # type: text
+        # classifier:
+        #     nlu: intent
+        #     match: reAsk
+    reAsk:
+        type: data
+        condition: payload.menu == "reAsk"
+    selesaiText:
+        type: text
+        priority: 3
+        classifier:
+            nlu: noyes 
+            expression: yesno == "no"
+        attributes: 
+            yesno: 
+                nlu: nl-noyes
+                path: yesno
+        condition: context.$state == "questions"
+        # priority: 2
+        # type: text
+        # classifier:
+        #     nlu: intent
+            # match: selesai
+    selesai:
+        type: data
+        condition: payload.menu == "selesai"
+    cancel:
+        type: text
+        priority: 10
+        classifier:
+            nlu: nl-noyes
+            expression: intent == "cancel"
+        attributes: 
+            intent: 
+                nlu: nl-noyes
+                path: intent
+                options:
+                    output: dict
+    resetData:
+        priority: 10
+        condition:
+            - "content == '#katafuadresetulangdariawal'"
+            - "content == '#katafuad'"
+            - "content == 'reset'"
+            - "content == 'Reset'"
+    # idle:
+    #     type: command
+    #     command: content == "userIdle"
+    fallback:
+        fallback: true
+            
+states:
+    init:
+        initial: true
+        transitions:
+            greetingAsk:
+                condition: intent == "init" || intent == "initButton" 
+            init:
+                fallback: true
+    greetingAsk:
+        # enter: parseTime
+        action: 
+            - name: sorry
+              condition: context.fallback
+            - name: greetingAsk
+            # - name: userIdle
+        transitions:
+            questions:
+                condition: intent == "inputQuestion"
+                mapping:
+                    context.questions: attributes.inputQuestion
+            greetingAsk:
+                fallback: true 
+    questions: 
+        action:
+            -   name: answerLogo
+                condition: attributes.inputQuestion == "logo"
+            -   name: answerCicil
+                condition: attributes.inputQuestion == "bisaCicil"
+            -   name: answerGaransi
+                condition: attributes.inputQuestion == "garansi"
+            -   name: answerSecond
+                condition: attributes.inputQuestion == "motorSecond"
+            -   name: optionLanjut  
+        transitions: 
+            akhiran:
+                condition: intent == "selesai" || intent == "selesaiText"
+            greetingAsk:
+                condition: intent == "reAsk" || intent == "reAskText"
+            questions:
+                fallback: true
+    cancel:
+        action:
+            - name: cancel
+            - name: akhiran
+        float:
+            priority: 10
+            condition: 'intent == "cancel"'
+        end: true
+    resetData:
+        action: resetData
+        float: 
+            priority: 10
+            condition: 'intent == "resetData"'
+        end: true
+    # idle:
+    #     action:
+    #         -   name: removeUserIdle
+    #         -   name: timeOutMessage
+    #     float:
+    #         priority: 10
+    #         condition: "intent == 'idle'"
+    #     end: true
+    other:
+        action: other
+        end: true
+    akhiran:
+        action: akhiran
+        end: true
+actions:
+    greetingAsk:
+        type: text
+        options:
+            text: "Apa yang ingin sobat Nada tanyakan nih?"
+    answerLogo:
+        type: 'template'
+        options:
+          type: 'image'
+          items: 
+            originalContentUrl: 'https://png.pngtree.com/png-clipart/20190612/original/pngtree-green-motorcycle-courier-png-image_3481161.jpg'
+            previewImageUrl: 'https://png.pngtree.com/png-clipart/20190612/original/pngtree-green-motorcycle-courier-png-image_3481161.jpg'
+    answerCicil:
+        type: text
+        options:
+            text: "Sistem pembayaran Nawa-Dealer bisa langsung lunas dan tersedia pula pilihan cicilan."
+    answerGaransi:
+        type: text
+        options:
+            text: "Setiap kendaraan yang dijual oleh Nada memiliki garansi body selama 5 tahun dan garansi mesin selama 3 tahun."
+    answerSecond:
+        type: text
+        options:
+            text: "Maaf, Nada hanya menjual kendaraan dengan kondisi baru."
+    cancel:
+        type: text
+        options:
+            text: "Ok, Nada batalin ya"
+    resetData:
+        type: command
+        options:
+            command: reset
+    akhiran:
+        type: text
+        options:
+            text: "Baiklah, silakan sapa Nada kembali jika sobat Nada butuh bantuan:)"
+    sorry:
+        type: text
+        options:
+            text: "Maaf, Nada tidak mengerti pertanyaan yang Kamu maksud"
+    other:
+        type: text
+        options:
+            text: "Nada gangerti apa maksud kamu :("
+    optionLanjut:
+        type: 'template'
+        options:
+                type: 'button'
+                items:
+                    title: Nawa Dealer
+                    text: 'Ada yang mau ditanyain lagi?'
+                    actions:
+                        -
+                            type: postback
+                            label: Iya
+                            text: Iya
+                            payload:
+                                menu: reAsk
+                        -
+                            type: postback
+                            label: Tidak
+                            text: Tidak
+                            payload:
+                                menu: selesai
+    # timeoutMessage:
+    #     type: text
+    #     options:
+    #         text: "Silahkan sapa Nanda lagi ya jika sobat Nanda butuh bantuan :)"
+    # removeUserIdle:
+    #     type: schedule
+    #     options:
+    #         id: userIdle
+    #         command: remove
+    # userIdle:
+    #     type: schedule
+    #     options:
+    #         id: userIdle
+    #         command: add
+    #         message:
+    #             type: command
+    #             content: userIdle
+    #         start: $(data.parsedTime)
+    #         end: $(data.parsedTimeEnd)
+    #         freqType: minutes
+    #         freqInterval: 2
+
+# methods:
+#     parseTime(ctx): "
+#         let date = new Date(ctx.context.$now + 120000);
+#         let dateISO = date.toISOString();
+#         let parsedDate = dateISO.split('T');
+#         let parsedTime = parsedDate[1].split('.');
+#         ctx.data.parsedTime = parsedDate[0] + ' ' + parsedTime[0];
+# ​
+#         let dateEnd = new Date(ctx.context.$now + 120000);
+#         let dateISOEnd = dateEnd.toISOString();
+#         let parsedDateEnd = dateISOEnd.split('T');
+#         let parsedTimeEnd = parsedDateEnd[1].split('.');
+#         ctx.data.parsedTimeEnd = parsedDateEnd[0] + ' ' + parsedTimeEnd[0];
+# ​
+#         return ctx;
+#     "

@@ -1,0 +1,470 @@
+volatile: true 
+intents:
+    greeting:
+        initial: true
+        type: text
+        classifier:
+            nlu: intent
+            match: greet
+    # sayThanks:
+    #     initial: true
+        # priority: 5
+        # type: data
+        # condition: payload.menu == "sayThanks"
+    sayThanksText:
+        initial: true
+        # priority: 5
+        type: text
+        classifier:
+            nlu: intent
+            match: selesaiMotor
+    goToMenu: 
+        type: data
+        condition: payload.menu == "goToMenu"
+    menuText:
+        initial: true
+        type: text
+        classifier:
+            nlu: intent
+            match: menu
+    userProfile:
+        type: data
+        condition: payload.menu == "userProfile"
+    profileText:
+        initial: true
+        type: text
+        classifier:
+            nlu: intent
+            match: profile
+    giveName:
+        priority: 2
+        type: text
+        classifier:
+            nlu: nawaDealer
+            expression: person
+        attributes:
+            name:
+                path: person
+                nlu: nawaDealer
+        condition: context.$state == "askName"
+    giveGender:
+        priority: 2
+        type: text
+        classifier:
+            nlu: intent
+            match: gender
+    giveAddress:
+        priority: 2
+        type: text
+        classifier:
+            nlu: nawaDealer
+            expression: location
+        attributes:
+            address:
+                path: location
+                nlu: nawaDealer
+        condition: context.$state == "askAddress"
+    givePhone:
+        priority: 2
+        type: text
+        classifier:
+            nlu: nawaDealer
+            expression: phone
+        attributes:
+            phone:
+                path: phone
+                nlu: nawaDealer
+        condition: context.$state == "askPhone"
+    cancel:
+        type: text
+        priority: 10
+        classifier:
+            nlu: nl-noyes
+            expression: intent == "cancel"
+        attributes: 
+            intent: 
+                nlu: nl-noyes
+                path: intent
+                options:
+                    output: dict
+    benar:
+        type: text
+        priority: 3
+        classifier:
+            nlu: noyes
+            expression: yesno == "yes"
+        attributes: 
+            yesno: 
+                nlu: noyes
+                path: yesno
+        condition: context.$state == "confirmation" || context.$state == "showButton"
+    salah:
+        type: text
+        priority: 3
+        classifier:
+            nlu: noyes
+            expression: yesno == "no"
+        attributes: 
+            yesno: 
+                nlu: noyes
+                path: yesno
+        condition: context.$state == "confirmation" || context.$state == "showButton"
+    resetData:
+        priority: 10
+        condition:
+            - "content == '#katafuadresetulangdariawal'"
+            - "content == '#katafuad'"
+            - "content == 'reset'"
+            - "content == 'Reset'"
+    reInput:
+        type: data
+        condition: payload.menu == "reInput"
+    register:
+        type: data
+        condition: payload.menu == "daftar"
+    getApi:
+        priority: 2
+        type: command
+        condition: content == "getApi"
+    fallback: 
+        fallback: true
+states:
+    init:
+        initial: true
+        transitions:
+            showButton:
+                condition: intent == "greeting"
+            showMenu:
+                condition: intent == "sayThanks" || intent == "sayThanksText" || intent == "menuText"
+            init:
+                fallback: true
+    # showPilihan:
+    #     action:
+    #         - name: askMenu
+    #         - name: showMenu
+    #     end: true
+    showButton:
+        action: 
+            - name: halo
+            - name: showButton
+        transitions:
+            callApiCustomerFind:
+            # showMenu:
+                condition: intent == "goToMenu" || intent == "menuText" || intent == "benar"
+            askName:
+                condition: intent == "userProfile" || intent == "profileText" || intent == "salah"
+            showButton:
+                fallback: true
+    callApiCustomerFind:
+        action: 
+            -   name: callApiCustomerFind
+            -   name: command
+                options: 
+                    command: getApi
+                    payload: 
+                        result: $(result)
+        # end: true
+        transitions:
+            showMenu:
+                condition: intent == "getApi" && !payload.result.message
+                mapping:
+                    data.token: payload.result.access_token
+            unregistered:
+                condition: intent == "getApi" && payload.result.message
+                mapping:
+                    context.result: 'payload.result.message'
+            fail:
+                fallback: true
+    unregistered:
+        action: 
+            - name: unregistered
+            - name: askName
+        end : true
+    # idSalah: 
+    #     action: 
+    #         - name: idSalah
+    #         - name: askName
+    #     end: true
+    askName:
+        action:
+            -   name: regis
+                condition: '!context.fallback'
+            -   name: askName
+                condition: '!context.fallback'
+            -   name: askNameBack
+                condition: context.fallback
+        transitions:
+            askGender:
+                condition: intent == "giveName"
+                mapping:
+                    data.name: attributes.name
+                    context.fallback: "false"
+            askName:
+                fallback: true
+    askGender:
+        action:
+            -   name: askGender
+                condition: '!context.fallback'
+            -   name: askGenderBack
+                condition: context.fallback
+        transitions:
+            askPhone:
+                condition: intent == "giveGender"
+                mapping:
+                    data: 
+                        gender: content
+            askGender:
+                fallback: true
+    askPhone:
+        action:
+            -   name: askPhone
+                condition: '!context.fallback'
+            -   name: askPhoneBack
+                condition: context.fallback
+        transitions:
+            askAddress:
+                condition: intent == "givePhone"
+                mapping:
+                    data.phone: attributes.phone
+                    context.fallback: "false"
+            askPhone:
+                fallback: true          
+    askAddress:
+        action:
+            -   name: askAddress
+                condition: '!context.fallback'
+            -   name: askAddressBack
+                condition: context.fallback
+        transitions:
+            confirmation:
+                condition: intent == "giveAddress"
+                mapping:
+                    data.address: attributes.address
+                    context.fallback: "false"
+            askAddress:
+                fallback: true   
+    confirmation:
+        action: confirmation
+        transitions:
+            callApiRegister:
+                condition: intent == "benar"
+            askName:
+                condition: intent == "salah"
+                mapping:
+                    context.fallback: "true"
+            confirmation:
+                fallback: true
+    callApiRegister:
+        action: 
+            -   name: callApiRegister
+            -   name: command
+                options: 
+                    command: getApi
+                    payload: 
+                        result: $(result)
+        transitions:
+            showMenu:
+                condition: intent == "getApi" && payload.result
+                mapping:
+                    data.token: payload.result.access_token
+            fail:
+                condition: intent == "getApi" && !payload.result
+    fail:
+        action: fail
+        end: true
+    cancel:
+        action:
+            - name: cancel
+            - name: akhiran
+        float:
+            priority: 10
+            condition: 'intent == "cancel"'
+        end: true
+    resetData:
+        action: resetData
+        float: 
+            priority: 10
+            condition: 'intent == "resetData"'
+        end: true
+    showMenu:
+        # enter: method
+        action:
+            - name: askMenu
+            - name: showMenu
+        end: true
+            
+actions:
+    halo:
+        type: text
+        options:
+            text: "Halo"
+    showButton:
+        type: 'template'
+        options:
+              type: 'button'
+              items:
+                  title: Registrasi
+                  text: 'Apakah kamu sudah daftar sebelumnya?'
+                  actions:
+                      -
+                          type: postback
+                          label: Ya
+                          text: Ya
+                          payload:
+                              menu: goToMenu
+                      -
+                          type: postback
+                          label: Tidak
+                          text: Tidak 
+                          payload:
+                              menu: userProfile
+    # buttonId:
+    #     type: 'template'
+    #     options:
+    #           type: 'button'
+    #           items:
+    #               title: Id Salah
+    #               text: 'Maaf, Id kamu belum terdaftar.'
+    #               actions:
+    #                   -
+    #                       type: postback
+    #                       label: Masukkan Kembali Id
+    #                       text: Masukkan Kembali Id
+    #                       payload:
+    #                           menu: reInput
+    #                   -
+    #                       type: postback
+    #                       label: Daftar
+    #                       text: Daftar 
+    #                       payload:
+    #                           menu: daftar
+    idSalah:
+        type: text
+        options:
+            text: "Maaf, Akun kamu belum terdaftar di Nawa-Dealer."
+    askId:
+        type: text
+        options:
+            text: "Id kamu berapa?"
+    fail:
+        type: text
+        options: 
+            text: "Tunggu sebentar ya, akun kamu sedang Nada proses. Kalau prosesnya lebih dari 10 menit, Panggil Nada lagi aja ya"
+    unregistered:
+        type: text
+        options:
+            text: "Maaf sepertinya kamu belum terdaftar di Nada, kita daftar dulu yuk!"
+    regis:
+        type: text
+        options:
+            text: "Kita registrasi ya, perkenalkan aku Nada, asisten virtual dari Nawa-Dealer yang akan membantu sobat Nada."
+    askName:
+        type: text
+        options:
+            text: "Btw, nama kamu siapa?"
+
+    askGender:
+        type: text
+        options:
+            text: "Jenis kelamin kamu apa? (P/L)"
+    askPhone:
+        type: text
+        options:
+            text: "Kemudian untuk mempermudah semua proses, Nada ingin tahu nomor telepon sobat Nada nih, Berapa nomor telepon kamu?"
+    askAddress:
+        type: text
+        options:
+            text: "Ok $(data.name), kota tinggal $(data.name) dimana?"
+    confirmation:
+        type: text
+        options:
+            text: "Hi Nada konfirmasi data $(data.name) yaa, apakah benar data $(data.name) sebagai berikut?\n
+                    Nama: $(data.name)\n
+                    Jenis Kelamin: $(data.gender)\n
+                    No.Telp: $(data.phone)\n
+                    Alamat: $(data.address)"
+    askNameBack:
+        type: text
+        options:
+            text: "Oke, jadi nama kamu yang benar siapa?"
+    askGenderBack:
+        type: text
+        options:
+            text: "Kalau jenis kelamin kamu apa? (P/L)"
+    askPhoneBack:
+        type: text
+        options:
+            text: "Silahkan masukkan no telepon kamu yang benar"
+    askAddressBack:
+        type: text
+        options:
+            text: "Alamat kamu dimana?"
+    cancel:
+        type: text
+        options:
+            text: "Ok, Nada batalin ya"
+    akhiran:
+        type: text
+        options:
+            text: "Baiklah, silakan sapa Nada kembali jika sobat Nada butuh bantuan:)"
+    askMenu:
+        type: text
+        options:
+            text: "Ada yang bisa kami bantu? Silahkan pilih menu dibawah ini ya $(data.token) // $(metadata.fbmessengerSenderId)"
+    resetData:
+        type: command
+        options:
+            command: reset
+    callApiCustomerFind :
+        type: api
+        options:
+            method: GET
+            uri: 'http://1500c045.ngrok.io/customerfind'
+            formData:
+                input_fbid: $(metadata.fbmessengerSenderId)
+                # input_fbid: 2585259921495344
+    callApiRegister:
+        type: api
+        options:    
+            method: POST
+            uri: 'http://1500c045.ngrok.io/register'
+            headers:
+                Content-Type: application/json
+            formData:
+                fbid: $(metadata.fbmessengerSenderId)
+                name: $(data.name)
+                jk: $(data.gender)
+                no_telp: $(data.phone)
+                address: $(data.address)
+    showMenu:
+        type: 'template'
+        options:
+            type: 'carousel'
+            items:
+                - 
+                    title: 'Beli Motor'
+                    text: 'Yuk pilih motor disini!'
+                    thumbnailImageUrl: 'https://t1.pixers.pics/img-c676e9e9/posterler-klasik-motosiklet-vektor-siluet-vektor-motosiklet-simgesi.jpg?H4sIAAAAAAAAA42PW07EMAxFt9NK7dhNk9bpAuZ3llDl1aHQR5QEGLF6EkD8ISHL8kO-x7rwekS1ODDuSC7Avlq7OVjWLU9xCi6uH67CRghZT3m7VYhYT-ebCyacvmoFNi2nZugwJ6und5WFuwov1VNKPk4Asb_49ZFpuZgIZo_AsBsBCYQkqdjCJHLqZt_GpA6rgs3Uh8CLP-4Nlvg_lqBDENp2etBkkWuaGSuw9pfwhe1l8UQF_eNxRGzG4i2Fda-y2TNfp-rZ32v44-d3D1kF1xsIgoFDz4FYWc3Xm6CB95zYPFjFrLD9IhZthGJSOaYl48voSAppLvnLJyBOXHyJAQAA'                  
+                    actions:
+                        - type: postback
+                          label: 'Beli Motor'
+                          payload:
+                              menu: beliMotor
+                - 
+                    title: 'Lokasi'
+                    text: 'Cari lokasi dealer terdekat di kotamu'
+                    thumbnailImageUrl: 'https://image.shutterstock.com/image-vector/map-pin-icon-location-symbol-260nw-1034591677.jpg'                    
+                    actions:
+                        - type: postback
+                          label: 'lokasi'
+                          payload:
+                              menu: lokasi
+                - 
+                    title: 'FAQ'
+                    text: 'Tanya-tanya yuk!'
+                    thumbnailImageUrl: 'https://previews.123rf.com/images/coramax/coramax1212/coramax121200182/16933237-3d-people-man-person-with-word-faq-frequently-asked-questions.jpg'                    
+                    actions:
+                        - type: postback
+                          label: 'FAQ'
+                          payload:
+                              menu: faq

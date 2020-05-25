@@ -1,0 +1,34 @@
+volatile: true
+intents:
+    init:
+        initial: true
+        type: text 
+        classifier:
+            nlu: intent
+            match: pengambilanDana
+    initButton:
+        initial: true
+        type: data
+        condition: payload.menu == "ambilDeposit"
+states:
+    init:
+        initial: true
+        transitions:
+            ambilDeposit:
+                condition: intent == "init" || intent == "initButton" 
+            init:
+                fallback: true
+    ambilDeposit:    
+        action: 
+            - name: ambilDeposit
+            - name: sayThanks
+        end: true
+actions:
+    ambilDeposit:
+        type: text
+        options:
+            text: "Dana Deposit NPL yang tidak menang lelang akan kami transfer ke rekening kamu paling lambat 3 Hari Kerja setelah lelang"
+    sayThanks:
+        type: text
+        options:
+            text: "Ok, kalau ada yang ingin ditanyakan, sapa Hibrid aja ya :)"

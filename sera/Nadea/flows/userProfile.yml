@@ -1,0 +1,159 @@
+volatile: true
+intents:
+    init:
+        initial: true
+        type: text
+        classifier: 
+            nlu: intent
+            match: profile
+    initButton:
+        initial: true
+        type: data
+        condition: payload.menu == "userProfile"
+    giveName:
+        priority: 2
+        type: text
+        classifier:
+            nlu: nawaDealer
+            expression: person
+        attributes:
+            name:
+                path: person
+                nlu: nawaDealer
+        condition: context.$state == "askName"
+    givePhone:
+        priority: 2
+        type: text
+        classifier:
+            nlu: nawaDealer
+            expression: phone
+        attributes:
+            phone:
+                path: phone
+                nlu: nawaDealer
+        condition: context.$state == "askPhone"
+    giveAddress:
+        priority: 2
+        type: text
+        classifier:
+            nlu: nawaDealer
+            expression: location
+        attributes:
+            address:
+                path: location
+                nlu: nawaDealer
+        condition: context.$state == "askAddress"
+    benar:
+        priority: 2
+        type: text
+        classifier:
+            nlu: intent
+            match: benar
+        condition: context.$state == "confirmation"
+    salah:
+        priority: 2
+        type: text
+        classifier:
+            nlu: intent
+            match: salah
+        condition: context.$state == "confirmation"
+    fallback:
+        fallback: true
+
+states:
+    init:
+        initial: true
+        transitions:
+            askName:
+                condition: intent == "initButton" || intent == "init"
+            init:
+                fallback: true
+    askName:
+        action:
+            -   name: askName
+                condition: '!context.fallback'
+            -   name: askNameBack
+                condition: context.fallback
+        transitions:
+            askAddress:
+                condition: intent == "giveName"
+                mapping:
+                    data:
+                        name: attributes.name
+                        context.fallback: "false"
+            askName:
+                fallback: true
+    askAddress:
+        action:
+            -   name: askAddress
+                condition: '!context.fallback'
+            -   name: askAddressBack
+                condition: context.fallback
+        transitions:
+            askPhone:
+                condition: intent == "giveAddress"
+                mapping:
+                    data:
+                        address: attributes.address
+                        context.fallback: "false"
+            askPhone:
+                fallback: true
+    askPhone:
+        action:
+            -   name: askPhone
+                condition: '!context.fallback'
+            -   name: askPhoneBack
+                condition: context.fallback
+        transitions:
+            confirmation:
+                condition: intent == "givePhone"
+                mapping:
+                    data:
+                        phone: attributes.phone
+                        context.fallback: "false"
+            askPhone:
+                fallback: true
+    confirmation:
+        action: confirmation
+        transitions:
+            askMenu:
+                condition: intent == "benar"
+            askName:
+                condition: intent == "salah"
+                mapping:
+                    context.fallback: "true"
+            confirmation:
+                fallback: true
+                
+actions:
+    askName:
+        type: text
+        options:
+            text: "Hi, perkenalkan aku Nada, asisten virtual dari Nawa-Dealer yang akan membantu sobat Nada menjawab pertanyaan seputar Nawa-Dealer. Btw, nama kamu siapa?"
+    askPhone:
+        type: text
+        options:
+            text: "Kemudian untuk mempermudah semua proses, Nada ingin tahu nomor telepon sobat Nada nih, Berapa nomor telepon kamu?"
+    askAddress:
+        type: text
+        options:
+            text: "Terakhir, kota tinggal sobat Nada dimana?"
+    confirmation:
+        type: text
+        options:
+            text: "Hi Nada konfirmasi data $(data.name) yaa, apakah benar data $(data.name) sebagai berikut?\n
+                    Nama: $(data.name)\n
+                    No.Telp: $(data.phone)\n
+                    Alamat: $(data.address)"
+    askNameBack:
+        type: text
+        options:
+            text: "Oke, jadi nama kamu yang benar siapa?"
+    askPhoneBack:
+        type: text
+        options:
+            text: "Silahkan masukkan no telepon sobat Nada yang benar"
+    askAddressBack:
+        type: text
+        options:
+            text: "Alamat sobat Nada dimana?"
